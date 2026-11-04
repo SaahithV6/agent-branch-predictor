@@ -1,194 +1,162 @@
 [
  {
-  "precision": 0.3606770833333333,
-  "coverage": 0.7124352331606217,
-  "calls_saved": 0.4725085910652921,
-  "predicted": 768,
-  "reads": 386,
-  "calls": 582,
   "domain": "retail",
-  "tasks": 115,
-  "mode": "results",
-  "theta": 0.0
+  "config": "v1 strict",
+  "tune_cv": {
+   "precision": 0.803030303030303,
+   "coverage": 0.592391304347826,
+   "calls_saved": 0.3784722222222222,
+   "predicted": 132,
+   "reads": 184,
+   "calls": 288
+  },
+  "holdout": {
+   "precision": 0.859504132231405,
+   "coverage": 0.5099009900990099,
+   "calls_saved": 0.35034013605442177,
+   "predicted": 121,
+   "reads": 202,
+   "calls": 294
+  }
  },
  {
-  "precision": 0.8547854785478548,
-  "coverage": 0.5492227979274611,
-  "calls_saved": 0.3642611683848797,
-  "predicted": 303,
-  "reads": 386,
-  "calls": 582,
   "domain": "retail",
-  "tasks": 115,
-  "mode": "results",
-  "theta": 0.3
+  "config": "v1 text",
+  "tune_cv": {
+   "precision": 0.7162162162162162,
+   "coverage": 0.5978260869565217,
+   "calls_saved": 0.3819444444444444,
+   "predicted": 148,
+   "reads": 184,
+   "calls": 288
+  },
+  "holdout": {
+   "precision": 0.7647058823529411,
+   "coverage": 0.5247524752475248,
+   "calls_saved": 0.36054421768707484,
+   "predicted": 136,
+   "reads": 202,
+   "calls": 294
+  }
  },
  {
-  "precision": 0.8547854785478548,
-  "coverage": 0.5492227979274611,
-  "calls_saved": 0.3642611683848797,
-  "predicted": 303,
-  "reads": 386,
-  "calls": 582,
   "domain": "retail",
-  "tasks": 115,
-  "mode": "results",
-  "theta": 0.5
+  "config": "v2 strict",
+  "tune_cv": {
+   "precision": 0.803030303030303,
+   "coverage": 0.592391304347826,
+   "calls_saved": 0.3784722222222222,
+   "predicted": 132,
+   "reads": 184,
+   "calls": 288
+  },
+  "holdout": {
+   "precision": 0.859504132231405,
+   "coverage": 0.5099009900990099,
+   "calls_saved": 0.35034013605442177,
+   "predicted": 121,
+   "reads": 202,
+   "calls": 294
+  }
  },
  {
-  "precision": 0.8547854785478548,
-  "coverage": 0.5492227979274611,
-  "calls_saved": 0.3642611683848797,
-  "predicted": 303,
-  "reads": 386,
-  "calls": 582,
   "domain": "retail",
-  "tasks": 115,
-  "mode": "results",
-  "theta": 0.7
+  "config": "v2 text",
+  "tune_cv": {
+   "precision": 0.6795580110497238,
+   "coverage": 0.6902173913043478,
+   "calls_saved": 0.4409722222222222,
+   "predicted": 181,
+   "reads": 184,
+   "calls": 288
+  },
+  "holdout": {
+   "precision": 0.7544910179640718,
+   "coverage": 0.6287128712871287,
+   "calls_saved": 0.43197278911564624,
+   "predicted": 167,
+   "reads": 202,
+   "calls": 294
+  }
  },
  {
-  "precision": 0.22110939907550076,
-  "coverage": 0.7538860103626943,
-  "calls_saved": 0.5,
-  "predicted": 1298,
-  "reads": 386,
-  "calls": 582,
-  "domain": "retail",
-  "tasks": 115,
-  "mode": "+instruction",
-  "theta": 0.0
- },
- {
-  "precision": 0.809375,
-  "coverage": 0.5647668393782384,
-  "calls_saved": 0.3745704467353952,
-  "predicted": 320,
-  "reads": 386,
-  "calls": 582,
-  "domain": "retail",
-  "tasks": 115,
-  "mode": "+instruction",
-  "theta": 0.3
- },
- {
-  "precision": 0.8119122257053292,
-  "coverage": 0.5647668393782384,
-  "calls_saved": 0.3745704467353952,
-  "predicted": 319,
-  "reads": 386,
-  "calls": 582,
-  "domain": "retail",
-  "tasks": 115,
-  "mode": "+instruction",
-  "theta": 0.5
- },
- {
-  "precision": 0.8248407643312102,
-  "coverage": 0.5544041450777202,
-  "calls_saved": 0.36769759450171824,
-  "predicted": 314,
-  "reads": 386,
-  "calls": 582,
-  "domain": "retail",
-  "tasks": 115,
-  "mode": "+instruction",
-  "theta": 0.7
- },
- {
-  "precision": 0.015561224489795918,
-  "coverage": 0.5806451612903226,
-  "calls_saved": 0.34177215189873417,
-  "predicted": 3920,
-  "reads": 93,
-  "calls": 158,
   "domain": "airline",
-  "tasks": 50,
-  "mode": "results",
-  "theta": 0.0
+  "config": "v1 strict",
+  "tune_cv": {
+   "precision": 0.6326530612244898,
+   "coverage": 0.4918032786885246,
+   "calls_saved": 0.3,
+   "predicted": 49,
+   "reads": 61,
+   "calls": 100
+  },
+  "holdout": {
+   "precision": 0.41379310344827586,
+   "coverage": 0.375,
+   "calls_saved": 0.20689655172413793,
+   "predicted": 29,
+   "reads": 32,
+   "calls": 58
+  }
  },
  {
-  "precision": 0.5584415584415584,
-  "coverage": 0.45161290322580644,
-  "calls_saved": 0.26582278481012656,
-  "predicted": 77,
-  "reads": 93,
-  "calls": 158,
   "domain": "airline",
-  "tasks": 50,
-  "mode": "results",
-  "theta": 0.3
+  "config": "v1 text",
+  "tune_cv": {
+   "precision": 0.6037735849056604,
+   "coverage": 0.5081967213114754,
+   "calls_saved": 0.31,
+   "predicted": 53,
+   "reads": 61,
+   "calls": 100
+  },
+  "holdout": {
+   "precision": 0.40540540540540543,
+   "coverage": 0.46875,
+   "calls_saved": 0.25862068965517243,
+   "predicted": 37,
+   "reads": 32,
+   "calls": 58
+  }
  },
  {
-  "precision": 0.5584415584415584,
-  "coverage": 0.45161290322580644,
-  "calls_saved": 0.26582278481012656,
-  "predicted": 77,
-  "reads": 93,
-  "calls": 158,
   "domain": "airline",
-  "tasks": 50,
-  "mode": "results",
-  "theta": 0.5
+  "config": "v2 strict",
+  "tune_cv": {
+   "precision": 0.6458333333333334,
+   "coverage": 0.4918032786885246,
+   "calls_saved": 0.3,
+   "predicted": 48,
+   "reads": 61,
+   "calls": 100
+  },
+  "holdout": {
+   "precision": 0.41379310344827586,
+   "coverage": 0.375,
+   "calls_saved": 0.20689655172413793,
+   "predicted": 29,
+   "reads": 32,
+   "calls": 58
+  }
  },
  {
-  "precision": 0.5584415584415584,
-  "coverage": 0.45161290322580644,
-  "calls_saved": 0.26582278481012656,
-  "predicted": 77,
-  "reads": 93,
-  "calls": 158,
   "domain": "airline",
-  "tasks": 50,
-  "mode": "results",
-  "theta": 0.7
- },
- {
-  "precision": 0.016733266733266732,
-  "coverage": 0.6451612903225806,
-  "calls_saved": 0.379746835443038,
-  "predicted": 4004,
-  "reads": 93,
-  "calls": 158,
-  "domain": "airline",
-  "tasks": 50,
-  "mode": "+instruction",
-  "theta": 0.0
- },
- {
-  "precision": 0.5444444444444444,
-  "coverage": 0.5161290322580645,
-  "calls_saved": 0.3037974683544304,
-  "predicted": 90,
-  "reads": 93,
-  "calls": 158,
-  "domain": "airline",
-  "tasks": 50,
-  "mode": "+instruction",
-  "theta": 0.3
- },
- {
-  "precision": 0.550561797752809,
-  "coverage": 0.5161290322580645,
-  "calls_saved": 0.3037974683544304,
-  "predicted": 89,
-  "reads": 93,
-  "calls": 158,
-  "domain": "airline",
-  "tasks": 50,
-  "mode": "+instruction",
-  "theta": 0.5
- },
- {
-  "precision": 0.5647058823529412,
-  "coverage": 0.5053763440860215,
-  "calls_saved": 0.2974683544303797,
-  "predicted": 85,
-  "reads": 93,
-  "calls": 158,
-  "domain": "airline",
-  "tasks": 50,
-  "mode": "+instruction",
-  "theta": 0.7
+  "config": "v2 text",
+  "tune_cv": {
+   "precision": 0.6274509803921569,
+   "coverage": 0.5245901639344263,
+   "calls_saved": 0.32,
+   "predicted": 51,
+   "reads": 61,
+   "calls": 100
+  },
+  "holdout": {
+   "precision": 0.128,
+   "coverage": 0.4375,
+   "calls_saved": 0.2413793103448276,
+   "predicted": 125,
+   "reads": 32,
+   "calls": 58
+  }
  }
 ]

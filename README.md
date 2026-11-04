@@ -8,14 +8,19 @@ Built on [QM](https://github.com/yc-software/qm) (agent harness) and [Native](ht
 
 ## Standard benchmark: tau-bench (offline replay)
 
-`bench/tau_replay.py` replays [tau-bench](https://github.com/sierra-research/tau-bench)'s ground-truth tool-call sequences (retail 115 test tasks, airline 50) against the benchmark's own data. Argument-source rules are learned on 4/5 of tasks (split by user) and scored on the held-out fifth. Only read calls are predicted; predictions use earlier tool results only (the user's instruction text is not used). Rules kept if right >=30% of the time on training folds.
+`bench/tau_replay.py` replays [tau-bench](https://github.com/sierra-research/tau-bench)'s ground-truth tool-call sequences (retail 115 test tasks, airline 50) against the benchmark's own data. Users are split in half: all tuning used 5-fold cross-validation on one half (`bench/sweep.py`, `bench/tau_diag.py`), and the other half was scored once with the locked settings. Only read calls are predicted. "Strict" uses earlier tool results only; "text" may also use the customer's words (approximated by the task instruction, so it is optimistic).
 
-| Domain | Guesses right (precision) | Read calls predicted before the agent asked (coverage) | All tool calls the model would not need to issue |
-|---|---|---|---|
-| Retail | 85% | 55% | 36% |
-| Airline | 56% | 45% | 27% |
+Holdout half (never used for tuning):
 
-Without the confidence filter, coverage rises (retail 71%, airline 58%) but most guesses are wasted (36% and 2% precision). This replay measures prediction only; it has no model in the loop, so it says nothing about time or tokens. That needs a live tau-bench run. Full sweep: `bench/results/tau_replay.log`.
+| | Retail guesses right | Retail lookups predicted | Retail calls saved | Airline guesses right | Airline lookups predicted | Airline calls saved |
+|---|---|---|---|---|---|---|
+| v1 strict | 86% | 51% | 35% | 41% | 38% | 21% |
+| v1 text | 76% | 52% | 36% | 41% | 47% | 26% |
+| v2 text | 75% | **63%** | **43%** | 13% | 44% | 24% |
+
+v2 adds looser ID patterns, a filter for list entries the customer mentioned, one-word triggers per rule, and Wilson lower-bound rule scoring. It holds up on retail (+11 points of coverage at the same precision) and fails on airline: a loose text pattern that looked fine on 30 tuning tasks fired 125 wrong guesses on the 20 holdout tasks. Airline is too small to tune on.
+
+Precision here is a lower bound: tau-bench's answer key lists a reference set of calls, and real agents also make reads it leaves out (e.g. user lookups before a change). The replay has no model in the loop, so it measures prediction only, not time or tokens. Logs: `bench/results/`.
 
 ## Run
 
