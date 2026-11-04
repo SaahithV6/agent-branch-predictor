@@ -6,6 +6,17 @@ Built on [QM](https://github.com/yc-software/qm) (agent harness) and [Native](ht
 
 **Honest summary.** All numbers below come from my own benchmarks (simulated skills and a simulated business help desk, 10-54 runs per comparison), not production traffic. When the predictor guesses, it is right ~94% of the time; it guesses for about two-thirds of lookups. Prediction alone made turns ~20% faster (9.5s -> 7.4s median). The bigger wins (e.g. 27.7s -> 9.5s) come from the full stack, which adds a fast answer path, thinking off, and tool pruning. On one-off requests, or when tools already take milliseconds, prediction alone does little.
 
+## Standard benchmark: tau-bench (offline replay)
+
+`bench/tau_replay.py` replays [tau-bench](https://github.com/sierra-research/tau-bench)'s ground-truth tool-call sequences (retail 115 test tasks, airline 50) against the benchmark's own data. Argument-source rules are learned on 4/5 of tasks (split by user) and scored on the held-out fifth. Only read calls are predicted; predictions use earlier tool results only (the user's instruction text is not used). Rules kept if right >=30% of the time on training folds.
+
+| Domain | Guesses right (precision) | Read calls predicted before the agent asked (coverage) | All tool calls the model would not need to issue |
+|---|---|---|---|
+| Retail | 85% | 55% | 36% |
+| Airline | 56% | 45% | 27% |
+
+Without the confidence filter, coverage rises (retail 71%, airline 58%) but most guesses are wasted (36% and 2% precision). This replay measures prediction only; it has no model in the loop, so it says nothing about time or tokens. That needs a live tau-bench run. Full sweep: `bench/results/tau_replay.log`.
+
 ## Run
 
 ```
