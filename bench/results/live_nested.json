@@ -1,0 +1,453 @@
+{
+ "folds": [
+  {
+   "fold": 0,
+   "tasks": 28,
+   "inner": {
+    "text=False theta=0.3": {
+     "precision": 0.9628099173553719,
+     "coverage": 0.10912511759172154,
+     "calls_saved": 0.07751419979953224,
+     "predicted": 242,
+     "reads": 2126,
+     "calls": 2993
+    },
+    "text=False theta=0.5": {
+     "precision": 0.9872881355932204,
+     "coverage": 0.10912511759172154,
+     "calls_saved": 0.07751419979953224,
+     "predicted": 236,
+     "reads": 2126,
+     "calls": 2993
+    },
+    "text=False theta=0.7": {
+     "precision": 0.9872881355932204,
+     "coverage": 0.10912511759172154,
+     "calls_saved": 0.07751419979953224,
+     "predicted": 236,
+     "reads": 2126,
+     "calls": 2993
+    },
+    "text=True theta=0.3": {
+     "precision": 0.8005631159080244,
+     "coverage": 0.7996237064910631,
+     "calls_saved": 0.5679919812896759,
+     "predicted": 2131,
+     "reads": 2126,
+     "calls": 2993
+    },
+    "text=True theta=0.5": {
+     "precision": 0.8028235294117647,
+     "coverage": 0.7996237064910631,
+     "calls_saved": 0.5679919812896759,
+     "predicted": 2125,
+     "reads": 2126,
+     "calls": 2993
+    },
+    "text=True theta=0.7": {
+     "precision": 0.9324215607401448,
+     "coverage": 0.5428033866415805,
+     "calls_saved": 0.3855663214166388,
+     "predicted": 1243,
+     "reads": 2126,
+     "calls": 2993
+    }
+   },
+   "strict": {
+    "config": "text=False theta=0.3",
+    "test": {
+     "precision": 0.958904109589041,
+     "coverage": 0.44871794871794873,
+     "calls_saved": 0.36649214659685864,
+     "predicted": 73,
+     "reads": 156,
+     "calls": 191
+    }
+   },
+   "text": {
+    "config": "text=True theta=0.3",
+    "test": {
+     "precision": 0.864406779661017,
+     "coverage": 0.6538461538461539,
+     "calls_saved": 0.5340314136125655,
+     "predicted": 118,
+     "reads": 156,
+     "calls": 191
+    }
+   }
+  },
+  {
+   "fold": 1,
+   "tasks": 15,
+   "inner": {
+    "text=False theta=0.3": {
+     "precision": 0.955719557195572,
+     "coverage": 0.11737943585077343,
+     "calls_saved": 0.08363047001620745,
+     "predicted": 271,
+     "reads": 2198,
+     "calls": 3085
+    },
+    "text=False theta=0.5": {
+     "precision": 0.9773584905660377,
+     "coverage": 0.11737943585077343,
+     "calls_saved": 0.08363047001620745,
+     "predicted": 265,
+     "reads": 2198,
+     "calls": 3085
+    },
+    "text=False theta=0.7": {
+     "precision": 0.9773584905660377,
+     "coverage": 0.11737943585077343,
+     "calls_saved": 0.08363047001620745,
+     "predicted": 265,
+     "reads": 2198,
+     "calls": 3085
+    },
+    "text=True theta=0.3": {
+     "precision": 0.8027522935779816,
+     "coverage": 0.794813466787989,
+     "calls_saved": 0.566288492706645,
+     "predicted": 2180,
+     "reads": 2198,
+     "calls": 3085
+    },
+    "text=True theta=0.5": {
+     "precision": 0.8049678012879485,
+     "coverage": 0.794813466787989,
+     "calls_saved": 0.566288492706645,
+     "predicted": 2174,
+     "reads": 2198,
+     "calls": 3085
+    },
+    "text=True theta=0.7": {
+     "precision": 0.9316575019638649,
+     "coverage": 0.5386715195632393,
+     "calls_saved": 0.38379254457050244,
+     "predicted": 1273,
+     "reads": 2198,
+     "calls": 3085
+    }
+   },
+   "strict": {
+    "config": "text=False theta=0.3",
+    "test": {
+     "precision": 1.0,
+     "coverage": 0.5238095238095238,
+     "calls_saved": 0.4444444444444444,
+     "predicted": 44,
+     "reads": 84,
+     "calls": 99
+    }
+   },
+   "text": {
+    "config": "text=True theta=0.3",
+    "test": {
+     "precision": 0.8333333333333334,
+     "coverage": 0.6547619047619048,
+     "calls_saved": 0.5555555555555556,
+     "predicted": 66,
+     "reads": 84,
+     "calls": 99
+    }
+   }
+  },
+  {
+   "fold": 2,
+   "tasks": 28,
+   "inner": {
+    "text=False theta=0.3": {
+     "precision": 0.9461883408071748,
+     "coverage": 0.09971509971509972,
+     "calls_saved": 0.07099391480730223,
+     "predicted": 223,
+     "reads": 2106,
+     "calls": 2958
+    },
+    "text=False theta=0.5": {
+     "precision": 0.9723502304147466,
+     "coverage": 0.09971509971509972,
+     "calls_saved": 0.07099391480730223,
+     "predicted": 217,
+     "reads": 2106,
+     "calls": 2958
+    },
+    "text=False theta=0.7": {
+     "precision": 0.9723502304147466,
+     "coverage": 0.09971509971509972,
+     "calls_saved": 0.07099391480730223,
+     "predicted": 217,
+     "reads": 2106,
+     "calls": 2958
+    },
+    "text=True theta=0.3": {
+     "precision": 0.8049713193116634,
+     "coverage": 0.798670465337132,
+     "calls_saved": 0.5686274509803921,
+     "predicted": 2092,
+     "reads": 2106,
+     "calls": 2958
+    },
+    "text=True theta=0.5": {
+     "precision": 0.8072866730584851,
+     "coverage": 0.798670465337132,
+     "calls_saved": 0.5686274509803921,
+     "predicted": 2086,
+     "reads": 2106,
+     "calls": 2958
+    },
+    "text=True theta=0.7": {
+     "precision": 0.9294503691550451,
+     "coverage": 0.5375118708452041,
+     "calls_saved": 0.38269100743745776,
+     "predicted": 1219,
+     "reads": 2106,
+     "calls": 2958
+    }
+   },
+   "strict": {
+    "config": "text=False theta=0.3",
+    "test": {
+     "precision": 1.0,
+     "coverage": 0.5227272727272727,
+     "calls_saved": 0.40707964601769914,
+     "predicted": 92,
+     "reads": 176,
+     "calls": 226
+    }
+   },
+   "text": {
+    "config": "text=True theta=0.3",
+    "test": {
+     "precision": 0.7894736842105263,
+     "coverage": 0.6818181818181818,
+     "calls_saved": 0.5309734513274337,
+     "predicted": 152,
+     "reads": 176,
+     "calls": 226
+    }
+   }
+  },
+  {
+   "fold": 3,
+   "tasks": 17,
+   "inner": {
+    "text=False theta=0.3": {
+     "precision": 0.9460431654676259,
+     "coverage": 0.12018348623853212,
+     "calls_saved": 0.08592981305346015,
+     "predicted": 278,
+     "reads": 2180,
+     "calls": 3049
+    },
+    "text=False theta=0.5": {
+     "precision": 0.9776119402985075,
+     "coverage": 0.11972477064220184,
+     "calls_saved": 0.08560183666775992,
+     "predicted": 268,
+     "reads": 2180,
+     "calls": 3049
+    },
+    "text=False theta=0.7": {
+     "precision": 0.9776119402985075,
+     "coverage": 0.11972477064220184,
+     "calls_saved": 0.08560183666775992,
+     "predicted": 268,
+     "reads": 2180,
+     "calls": 3049
+    },
+    "text=True theta=0.3": {
+     "precision": 0.8011855905152758,
+     "coverage": 0.8036697247706422,
+     "calls_saved": 0.5746146277468023,
+     "predicted": 2193,
+     "reads": 2180,
+     "calls": 3049
+    },
+    "text=True theta=0.5": {
+     "precision": 0.80439761795694,
+     "coverage": 0.8032110091743119,
+     "calls_saved": 0.574286651361102,
+     "predicted": 2183,
+     "reads": 2180,
+     "calls": 3049
+    },
+    "text=True theta=0.7": {
+     "precision": 0.9311424100156495,
+     "coverage": 0.5435779816513762,
+     "calls_saved": 0.38865201705477204,
+     "predicted": 1278,
+     "reads": 2180,
+     "calls": 3049
+    }
+   },
+   "strict": {
+    "config": "text=False theta=0.3",
+    "test": {
+     "precision": 1.0,
+     "coverage": 0.4019607843137255,
+     "calls_saved": 0.3037037037037037,
+     "predicted": 41,
+     "reads": 102,
+     "calls": 135
+    }
+   },
+   "text": {
+    "config": "text=True theta=0.3",
+    "test": {
+     "precision": 0.8709677419354839,
+     "coverage": 0.5,
+     "calls_saved": 0.37777777777777777,
+     "predicted": 62,
+     "reads": 102,
+     "calls": 135
+    }
+   }
+  },
+  {
+   "fold": 4,
+   "tasks": 21,
+   "inner": {
+    "text=False theta=0.3": {
+     "precision": 0.988,
+     "coverage": 0.11456400742115028,
+     "calls_saved": 0.08151815181518152,
+     "predicted": 250,
+     "reads": 2156,
+     "calls": 3030
+    },
+    "text=False theta=0.5": {
+     "precision": 0.988,
+     "coverage": 0.11456400742115028,
+     "calls_saved": 0.08151815181518152,
+     "predicted": 250,
+     "reads": 2156,
+     "calls": 3030
+    },
+    "text=False theta=0.7": {
+     "precision": 0.988,
+     "coverage": 0.11456400742115028,
+     "calls_saved": 0.08151815181518152,
+     "predicted": 250,
+     "reads": 2156,
+     "calls": 3030
+    },
+    "text=True theta=0.3": {
+     "precision": 0.8034547152194211,
+     "coverage": 0.7977736549165121,
+     "calls_saved": 0.5676567656765676,
+     "predicted": 2142,
+     "reads": 2156,
+     "calls": 3030
+    },
+    "text=True theta=0.5": {
+     "precision": 0.8034547152194211,
+     "coverage": 0.7977736549165121,
+     "calls_saved": 0.5676567656765676,
+     "predicted": 2142,
+     "reads": 2156,
+     "calls": 3030
+    },
+    "text=True theta=0.7": {
+     "precision": 0.932746196957566,
+     "coverage": 0.5403525046382189,
+     "calls_saved": 0.3844884488448845,
+     "predicted": 1249,
+     "reads": 2156,
+     "calls": 3030
+    }
+   },
+   "strict": {
+    "config": "text=False theta=0.3",
+    "test": {
+     "precision": 0.9491525423728814,
+     "coverage": 0.4365079365079365,
+     "calls_saved": 0.35714285714285715,
+     "predicted": 59,
+     "reads": 126,
+     "calls": 154
+    }
+   },
+   "text": {
+    "config": "text=True theta=0.3",
+    "test": {
+     "precision": 0.8645833333333334,
+     "coverage": 0.6507936507936508,
+     "calls_saved": 0.5324675324675324,
+     "predicted": 96,
+     "reads": 126,
+     "calls": 154
+    }
+   }
+  }
+ ],
+ "fold_of_user": {
+  "aarav_anderson_8794": 0,
+  "aarav_lee_1982": 1,
+  "aarav_santos_2259": 2,
+  "amelia_silva_7726": 3,
+  "ava_nguyen_6646": 4,
+  "chen_johnson_4204": 0,
+  "chen_silva_7485": 1,
+  "daiki_johnson_9523": 2,
+  "daiki_sanchez_3253": 3,
+  "daiki_silva_2903": 4,
+  "emma_kovacs_9839": 0,
+  "emma_smith_8564": 1,
+  "ethan_garcia_1261": 2,
+  "fatima_johnson_7581": 3,
+  "fatima_taylor_3452": 4,
+  "fatima_wilson_7472": 0,
+  "harper_moore_6183": 1,
+  "isabella_johansson_2152": 2,
+  "isabella_lopez_6490": 3,
+  "ivan_hernandez_6923": 4,
+  "ivan_johnson_6036": 0,
+  "ivan_khan_7475": 1,
+  "james_kim_7213": 2,
+  "james_kovacs_9247": 3,
+  "lei_li_6575": 4,
+  "lei_wilson_4541": 0,
+  "liam_moore_4057": 1,
+  "liam_thomas_7882": 2,
+  "lucas_brown_6720": 3,
+  "lucas_santos_6600": 4,
+  "mei_ahmed_4909": 0,
+  "mei_davis_8935": 1,
+  "mei_kovacs_8020": 2,
+  "mei_patel_7272": 3,
+  "mia_garcia_4516": 4,
+  "noah_ito_3850": 0,
+  "noah_patel_6952": 1,
+  "olivia_lopez_3865": 2,
+  "raj_santos_9079": 3,
+  "sofia_hernandez_5364": 4,
+  "sofia_li_9219": 0,
+  "sofia_thomas_1518": 1,
+  "sophia_martin_8570": 2,
+  "yara_ito_8499": 3,
+  "yara_muller_8652": 4,
+  "yara_silva_7567": 0,
+  "yusuf_gonzalez_8900": 1,
+  "yusuf_hernandez_6785": 2,
+  "yusuf_li_7255": 3,
+  "yusuf_rossi_9620": 4,
+  "yusuf_taylor_7149": 0
+ },
+ "strict": {
+  "precision": 0.9805825242718447,
+  "coverage": 0.468944099378882,
+  "calls_saved": 0.37515527950310557,
+  "predicted": 309,
+  "reads": 644,
+  "calls": 805
+ },
+ "text": {
+  "precision": 0.8380566801619433,
+  "coverage": 0.6366459627329193,
+  "calls_saved": 0.5093167701863354,
+  "predicted": 494,
+  "reads": 644,
+  "calls": 805
+ }
+}

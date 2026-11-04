@@ -6,6 +6,30 @@ Built on [QM](https://github.com/yc-software/qm) (agent harness) and [Native](ht
 
 **Honest summary.** All numbers below come from my own benchmarks (simulated skills and a simulated business help desk, 10-54 runs per comparison), not production traffic. When the predictor guesses, it is right ~94% of the time; it guesses for about two-thirds of lookups. Prediction alone made turns ~20% faster (9.5s -> 7.4s median). The bigger wins (e.g. 27.7s -> 9.5s) come from the full stack, which adds a fast answer path, thinking off, and tool pruning. On one-off requests, or when tools already take milliseconds, prediction alone does little.
 
+## Live agent on tau-bench retail (Claude Haiku 4.5)
+
+`bench/tau_live.py` runs a real agent (Claude Haiku 4.5 through the Claude Code CLI, tau-bench's retail policy, the benchmark's tools served by `bench/tau_mcp.py`) in solo mode on all 500 retail train tasks and 115 test tasks, recording every tool call.
+
+**Prediction vs. what the agent actually did** (`bench/tau_live_nested.py`: nested 5-fold CV over test-task customers; each fold trains on the 500 train traces plus the other folds and picks its settings by inner CV, so no fold is scored by rules that saw its customers):
+
+| Mode | Guesses right | Reads predicted before the agent asked | All tool calls the model would not need to issue |
+|---|---|---|---|
+| Strict (earlier tool results only) | 98% | 47% | 38% |
+| Text (also the customer's request) | 84% | 64% | 51% |
+
+Training on train-task traces alone fails (5% coverage): every train request quotes the order number, so the agent never shows the test-style flow (user -> account -> every order). The predictor only predicts patterns it has seen.
+
+**End-to-end A/B** (`bench/ab_compare.py`, text mode, per-fold rules, both arms run side by side on the same 115 test tasks, 106 paired; bootstrap 95% CIs):
+
+| | Baseline | With prediction | Change |
+|---|---|---|---|
+| Tool calls the agent issued | 7.5 | 3.9 | **-47%** (-52..-43) |
+| Model turns | 8.5 | 4.9 | **-42%** (-46..-38) |
+| Input tokens | 68.7k | 53.6k | **-22%** (-26..-18) |
+| Output tokens | 2,340 | 2,185 | -7% (-13..-1) |
+| Wall time | 23.5s | 22.0s | -7% (-12..-1); median 22s -> 19s |
+| Write actions match the answer key | 73/106 | 75/106 | no loss |
+
 ## Standard benchmark: tau-bench (offline replay)
 
 `bench/tau_replay.py` replays [tau-bench](https://github.com/sierra-research/tau-bench)'s ground-truth tool-call sequences (retail 115 test tasks, airline 50) against the benchmark's own data. Users are split in half: all tuning used 5-fold cross-validation on one half (`bench/sweep.py`, `bench/tau_diag.py`), and the other half was scored once with the locked settings. Only read calls are predicted. "Strict" uses earlier tool results only; "text" may also use the customer's words (approximated by the task instruction, so it is optimistic).
