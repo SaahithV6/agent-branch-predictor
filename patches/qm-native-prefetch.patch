@@ -1,0 +1,313 @@
+diff --git a/src/config.ts b/src/config.ts
+index 2f9a175..857cdb3 100644
+--- a/src/config.ts
++++ b/src/config.ts
+@@ -86,6 +86,7 @@ export interface Config {
+   codexProcessEnv: NodeJS.ProcessEnv;
+   claudeModel?: string;
+   claudeBinPath?: string;
++  claudeWarmPool?: boolean;
+   claudeProcessEnv: NodeJS.ProcessEnv;
+   detectModelId?: string;
+   titleModelId?: string;
+@@ -1483,6 +1484,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+     codexProcessEnv,
+     ...(env.CLAUDE_MODEL ? { claudeModel: env.CLAUDE_MODEL } : {}),
+     ...(env.CLAUDE_BIN ? { claudeBinPath: env.CLAUDE_BIN } : {}),
++    ...(env.CLAUDE_WARM_POOL === "1" ? { claudeWarmPool: true } : {}),
+     claudeProcessEnv,
+     ...(env.PI_DETECT_MODEL ? { detectModelId: env.PI_DETECT_MODEL } : {}),
+     ...(env.PI_TITLE_MODEL ? { titleModelId: env.PI_TITLE_MODEL } : {}),
+diff --git a/src/core/orchestrator.ts b/src/core/orchestrator.ts
+index 12cfc23..50215c6 100644
+--- a/src/core/orchestrator.ts
++++ b/src/core/orchestrator.ts
+@@ -1092,7 +1092,7 @@ export function createOrchestrator(deps: OrchestratorDeps): Orchestrator {
+       const { sharingSources, memoryScopeId, baseRecallScopes, memoryAccess } = context;
+       resolution.grantedHandles = context.listFiles();
+       const recallStart = Date.now();
+-      const recalled = await context.recall();
++      const recalled = await context.recall(input.text);
+       const recallMs = Date.now() - recallStart;
+       const isWeb = input.surface === "web";
+       const isSlack = input.surface === "slack";
+diff --git a/src/harness/claude-harness.ts b/src/harness/claude-harness.ts
+index e2f184b..a6f45b1 100644
+--- a/src/harness/claude-harness.ts
++++ b/src/harness/claude-harness.ts
+@@ -1,5 +1,5 @@
+ import { documentBlocks } from "./document-inputs.ts";
+-import { randomBytes, randomUUID } from "node:crypto";
++import { createHash, randomBytes, randomUUID } from "node:crypto";
+ import { spawn } from "node:child_process";
+ import { chownSync, mkdtempSync, rmSync } from "node:fs";
+ import { tmpdir } from "node:os";
+@@ -64,6 +64,7 @@ export interface ClaudeHarnessOptions extends HarnessToolPlumbing {
+   defaultModelId?: string;
+   judgeModelId?: string;
+   binaryPath?: string;
++  warmPool?: boolean;
+   env?: NodeJS.ProcessEnv;
+   turnWallClockMs?: number;
+   /**
+@@ -83,6 +84,7 @@ export function claudeHarnessConfigOptions(config: Config): ClaudeHarnessOptions
+       ? { judgeModelId: config.judgeModelId }
+       : {}),
+     ...(config.claudeBinPath ? { binaryPath: config.claudeBinPath } : {}),
++    ...(config.claudeWarmPool ? { warmPool: true } : {}),
+     env: config.claudeProcessEnv,
+     ...coreToolOptions(config),
+     turnWallClockMs: config.turnWallClockMs,
+@@ -140,6 +142,75 @@ export function spawnClaudeProcess(options: SpawnOptions, identity?: { uid: numb
+   });
+ }
+ 
++type ProcessIdentity = { uid: number; gid: number };
++
++interface WarmProcess {
++  jail: string;
++  child: SpawnedProcess;
++  timer: NodeJS.Timeout;
++}
++
++const WARM_PROCESS_TTL_MS = 10 * 60_000;
++const warm = new Map<string, WarmProcess>();
++
++function spawnKey(options: SpawnOptions, jail: string): string {
++  const strip = (v: string) => v.replaceAll(jail, "<jail>");
++  const env = Object.entries(options.env ?? {})
++    .map(([k, v]) => [k, typeof v === "string" ? strip(v) : v])
++    .sort(([a], [b]) => String(a).localeCompare(String(b)));
++  return JSON.stringify([options.command, options.args.map(strip), strip(options.cwd ?? ""), env]);
++}
++
++function retireWarm(key: string, entry: WarmProcess): void {
++  clearTimeout(entry.timer);
++  entry.child.kill("SIGTERM");
++  rmSync(entry.jail, { recursive: true, force: true });
++  if (warm.get(key) === entry) warm.delete(key);
++}
++
++function prewarm(key: string, options: SpawnOptions, jail: string, identity?: ProcessIdentity): void {
++  const next = mkdtempSync(join(tmpdir(), "qm-claude-"));
++  if (identity) chownSync(next, identity.uid, identity.gid);
++  const swap = (v: string) => v.replaceAll(jail, next);
++  const env = Object.fromEntries(Object.entries(options.env ?? {}).map(([k, v]) => [k, typeof v === "string" ? swap(v) : v]));
++  const spec = { ...options, args: options.args.map(swap), cwd: swap(options.cwd ?? next), env, signal: new AbortController().signal };
++  const entry: WarmProcess = {
++    jail: next,
++    child: spawnClaudeProcess(spec, identity),
++    timer: setTimeout(() => retireWarm(key, entry), WARM_PROCESS_TTL_MS),
++  };
++  entry.timer.unref?.();
++  const previous = warm.get(key);
++  if (previous) retireWarm(key, previous);
++  warm.set(key, entry);
++}
++
++export function warmProcessSpawner(jail: string, enabled: boolean, identity?: ProcessIdentity) {
++  return (options: SpawnOptions): SpawnedProcess => {
++    if (!enabled) return spawnClaudeProcess(options, identity);
++    const key = spawnKey(options, jail);
++    const entry = warm.get(key);
++    let child: SpawnedProcess | undefined;
++    if (entry) {
++      warm.delete(key);
++      clearTimeout(entry.timer);
++      if (entry.child.exitCode === null) {
++        child = entry.child;
++        const cleanup = () => rmSync(entry.jail, { recursive: true, force: true });
++        entry.child.once("exit", cleanup);
++        options.signal?.addEventListener("abort", () => entry.child.kill("SIGTERM"), { once: true });
++      } else rmSync(entry.jail, { recursive: true, force: true });
++    }
++    child ??= spawnClaudeProcess(options, identity);
++    try {
++      prewarm(key, options, jail, identity);
++    } catch (error) {
++      swallow("claude: prewarm", error);
++    }
++    return child;
++  };
++}
++
+ export function claudeChildToolHook(input: HookInput): HookJSONOutput {
+   if (
+     input.hook_event_name !== "PreToolUse" ||
+@@ -233,6 +304,45 @@ export function claudeReplayTranscript(messages: readonly PiReplayMessage[]): st
+   ].join("\n");
+ }
+ 
++export const FAST_PATH_MARKER = "[[qm-fast-path]]";
++const FAST_PATH_SYSTEM_PROMPT =
++  "You are the user's AI teammate. Answer the request from the live tool results in the context; they were fetched for this request moments ago. Lead with the answer, then the key facts with their numbers. Be concise, but when the request covers a set of records, name every record that matches; never drop one to save space. If the results do not contain something the request needs, say exactly what is missing.";
++
++export const NO_THINK_MARKER = "[[qm-no-think]]";
++export const FAST_MEMO_MARKER = "[[qm-fast-memo]]";
++const FAST_MEMO_TTL_MS = 10 * 60_000;
++const fastMemo = new Map<string, { reply: string; at: number }>();
++
++function fastMemoKey(model: string, text: string): string {
++  return createHash("sha256").update(`${model}\n${FAST_PATH_SYSTEM_PROMPT}\n${text}`).digest("hex");
++}
++
++function recallFastMemo(key: string): string | undefined {
++  const hit = fastMemo.get(key);
++  if (!hit) return undefined;
++  if (Date.now() - hit.at > FAST_MEMO_TTL_MS) {
++    fastMemo.delete(key);
++    return undefined;
++  }
++  return hit.reply;
++}
++
++function markedTurn(turn: HarnessTurnInput, marker: string): boolean {
++  return Boolean(turn.environment?.includes(marker)) && !turn.input.includes(marker);
++}
++
++const TOOL_SCOPE_RE = /\[\[qm-tools:([^\]]*)\]\]/;
++
++export function turnToolScope(turn: HarnessTurnInput): Set<string> | undefined {
++  if (TOOL_SCOPE_RE.test(turn.input)) return undefined;
++  const match = TOOL_SCOPE_RE.exec(turn.environment ?? "");
++  return match ? new Set(match[1]!.split(",").filter(Boolean)) : undefined;
++}
++
++export function fastPathTurn(turn: HarnessTurnInput): boolean {
++  return markedTurn(turn, FAST_PATH_MARKER);
++}
++
+ function promptText(turn: HarnessTurnInput): string {
+   const replay = claudeReplayTranscript(reconstructMessagesFromHistory(turn.history));
+   const prior = turn.history.length
+@@ -329,18 +439,24 @@ export function createClaudeHarness(opts: ClaudeHarnessOptions = {}): Harness {
+       documentTextBudget,
+       turn.cancel,
+     );
+-    const jail = mkdtempSync(join(tmpdir(), "qm-claude-"));
+     const processIdentity = claudeProcessIdentity();
++    const jail = mkdtempSync(join(tmpdir(), "qm-claude-"));
+     if (processIdentity) chownSync(jail, processIdentity.uid, processIdentity.gid);
+     const ref = harnessToolContext(turn);
+     const controller = new AbortController();
+     ref.abortSignal = controller.signal;
+-    const bridged = toolsEnabled ? bridgedTools(ref, harnessToolOptions(opts, turn)) : [];
++    const fastPath = toolsEnabled && fastPathTurn(turn);
++    const toolScope = turnToolScope(turn);
++    const toolOptions = harnessToolOptions(opts, turn);
++    const listMcp = toolOptions.mcpTools;
++    const scopedOptions =
++      toolScope && listMcp ? { ...toolOptions, mcpTools: () => listMcp().filter((d) => toolScope.has(d.name)) } : toolOptions;
++    const bridged = toolsEnabled && !fastPath ? bridgedTools(ref, scopedOptions) : [];
+     const bridgedNames = bridged.map((definition) => `mcp__qm__${definition.name}`);
+     const childToolNames = bridged
+       .filter((definition) => nativeChildToolAllowed(definition.name))
+       .map((definition) => `mcp__qm__${definition.name}`);
+-    const allowSubagents = !turn.readOnly && !turn.delegateWork;
++    const allowSubagents = !turn.readOnly && !turn.delegateWork && !fastPath;
+     const childPolicy = `${turn.systemPrompt}\n\nComplete only the delegated task. Do not contact people, schedule work, change standing configuration, or suppress the parent reply.`;
+     const childAgents = {
+       research: {
+@@ -385,9 +501,17 @@ export function createClaudeHarness(opts: ClaudeHarnessOptions = {}): Harness {
+       scopeLabel: turn.scopeLabel,
+     });
+     const requestedModel = turn.runtime?.modelId;
+-    const model = modelSupportedByHarness(requestedModel, "claude") ? requestedModel! : resolveModelId(turn.scopeLabel);
++    const turnModel = modelSupportedByHarness(requestedModel, "claude") ? requestedModel! : resolveModelId(turn.scopeLabel);
++    const model = fastPath ? judgeModelId : turnModel;
+     const turnEffort = effort(turn.runtime?.effortLevel);
+-    const text = promptText(turn);
++    const noThink = fastPath || markedTurn(turn, NO_THINK_MARKER);
++    const text = promptText(turn)
++      .replaceAll(FAST_PATH_MARKER, "")
++      .replaceAll(NO_THINK_MARKER, "")
++      .replaceAll(FAST_MEMO_MARKER, "")
++      .replace(TOOL_SCOPE_RE, "");
++    const memoKey = fastPath && markedTurn(turn, FAST_MEMO_MARKER) && !turn.history.length ? fastMemoKey(model, text) : undefined;
++    const memoReply = memoKey ? recallFastMemo(memoKey) : undefined;
+     const initial = userMessage(text, turn.images);
+     if (turn.documents?.length && Array.isArray(initial.message.content)) {
+       initial.message.content.push(...(preparedDocuments as unknown as typeof initial.message.content));
+@@ -435,6 +559,20 @@ export function createClaudeHarness(opts: ClaudeHarnessOptions = {}): Harness {
+       });
+     };
+     const authEnv = opts.authEnv ? await opts.authEnv() : undefined;
++    if (memoReply !== undefined) {
++      await appendTape(stripClaudeImageBytes(userMessage(text, turn.images)), true);
++      await appendTape({
++        type: "assistant",
++        uuid: randomUUID(),
++        session_id: "",
++        parent_tool_use_id: null,
++        message: { id: `memo_${randomUUID()}`, type: "message", role: "assistant", model, content: [{ type: "text", text: memoReply }], stop_reason: "end_turn", stop_sequence: null, usage: { input_tokens: 0, output_tokens: 0 } },
++      });
++      console.log(`[claude] usage ${JSON.stringify({ runId: turn.runId ?? null, fastPath, memo: true, model, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, costUsd: 0 })}`);
++      turn.onDelta?.(memoReply);
++      rmSync(jail, { recursive: true, force: true });
++      return { reply: memoReply, modelCalls: 0 };
++    }
+     const sdkQuery = query({
+       prompt: queue,
+       options: {
+@@ -484,10 +622,9 @@ export function createClaudeHarness(opts: ClaudeHarnessOptions = {}): Harness {
+         persistSession: false,
+         includePartialMessages: true,
+         extraArgs: { "replay-user-messages": null },
+-        ...(processIdentity
+-          ? { spawnClaudeCodeProcess: (options: SpawnOptions) => spawnClaudeProcess(options, processIdentity) }
+-          : {}),
+-        systemPrompt: turn.systemPrompt,
++        spawnClaudeCodeProcess: warmProcessSpawner(jail, opts.warmPool === true, processIdentity),
++        systemPrompt: fastPath ? FAST_PATH_SYSTEM_PROMPT : turn.systemPrompt,
++        ...(noThink ? { thinking: { type: "disabled" as const } } : {}),
+         model,
+         ...(opts.binaryPath ? { pathToClaudeCodeExecutable: opts.binaryPath } : {}),
+         ...(turnEffort ? { effort: turnEffort } : {}),
+@@ -829,6 +966,21 @@ export function createClaudeHarness(opts: ClaudeHarnessOptions = {}): Harness {
+         },
+         { input: 0, cacheRead: 0, cacheWrite: 0 },
+       );
++      console.log(
++        `[claude] usage ${JSON.stringify({
++          runId: turn.runId ?? null,
++          fastPath,
++          noThink,
++          toolScope: toolScope ? toolScope.size : null,
++          model,
++          input: finalResult.usage.input_tokens,
++          output: finalResult.usage.output_tokens,
++          cacheRead: finalResult.usage.cache_read_input_tokens,
++          cacheWrite: finalResult.usage.cache_creation_input_tokens,
++          costUsd: finalResult.total_cost_usd ?? null,
++        })}`,
++      );
++      if (memoKey && reply.trim() && !stopped) fastMemo.set(memoKey, { reply, at: Date.now() });
+       return {
+         reply,
+         ...(stopped ? { stopped: true as const, stoppedByUser: true as const } : {}),
+diff --git a/src/resolution/turn-context.ts b/src/resolution/turn-context.ts
+index 1802293..59dfdcf 100644
+--- a/src/resolution/turn-context.ts
++++ b/src/resolution/turn-context.ts
+@@ -26,6 +26,8 @@ type ContextInput = Omit<Parameters<typeof sharingSourcesForTurn>[0], "posture">
+   auditLog?: AuditLog;
+ };
+ 
++const TURN_RECALL_MAX_CHARS = 64_000;
++
+ interface MemoryReaderInput {
+   memory: MemoryService;
+   scopes: readonly ScopeId[];
+@@ -35,10 +37,10 @@ interface MemoryReaderInput {
+ 
+ export function contextMemory({ memory, scopes, actorId, onRead }: MemoryReaderInput) {
+   return {
+-    async recall(): Promise<string> {
++    async recall(query?: string): Promise<string> {
+       const sections: string[] = [];
+       for (const scope of scopes) {
+-        const body = (await memory.read(scope)).trim();
++        const body = (query ? await memory.recall(scope, { query, actorId, maxChars: TURN_RECALL_MAX_CHARS }) : await memory.read(scope)).trim();
+         onRead?.(scope);
+         if (body) sections.push(`### ${scope}\n${body}`);
+       }

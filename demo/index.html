@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speculative Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0c0f13;
+  --panel: #141920;
+  --panel-2: #1a2029;
+  --line: #262e39;
+  --ink: #e8ecf1;
+  --ink-2: #a8b1bd;
+  --ink-3: #6f7a88;
+  --plain: #9aa3ae;
+  --ours: #3d9bff;
+  --good: #35d29a;
+  --warn: #f2a93b;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 "IBM Plex Sans", system-ui, sans-serif; padding-inline: 20px; padding-block: 20px; }
+main { max-width: 1500px; margin: 0 auto; display: grid; gap: 16px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+h1 { margin: 0; font: 600 26px/1.1 "IBM Plex Sans", system-ui, sans-serif; letter-spacing: -0.01em; }
+h1 span { color: var(--ours); }
+.sub { color: var(--ink-3); font-size: 13px; }
+.ask { display: grid; gap: 10px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+input#q { flex: 1 1 420px; min-width: 0; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font: inherit; font-size: 16px; }
+input#q:focus-visible, button:focus-visible { outline: 2px solid var(--ours); outline-offset: 2px; }
+button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 10px 14px; }
+button.go { background: var(--ours); border-color: var(--ours); color: #04121f; font-weight: 600; padding-inline: 22px; }
+button.chip { font-size: 13px; padding: 6px 12px; color: var(--ink-2); }
+button.chip:hover { color: var(--ink); border-color: var(--ink-3); }
+button:disabled { opacity: 0.5; cursor: default; }
+.banner { min-height: 58px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 10px 18px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); }
+.banner .big { font: 600 30px/1 "IBM Plex Mono", ui-monospace, monospace; color: var(--good); }
+.banner .muted { color: var(--ink-3); }
+.lanes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr)); gap: 16px; }
+.lane { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; align-content: start; }
+.lane.ours { border-top: 3px solid var(--ours); }
+.lane.plain { border-top: 3px solid var(--plain); }
+.lane-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.lane-name { font-weight: 600; font-size: 17px; }
+.lane.ours .lane-name { color: var(--ours); }
+.pill { font: 500 12px "IBM Plex Mono", ui-monospace, monospace; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; }
+.pill.live { color: var(--warn); border-color: var(--warn); }
+.pill.done { color: var(--good); border-color: var(--good); }
+.timer { font: 600 52px/1 "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.metric { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; }
+.metric .k { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.metric .v { font: 500 18px "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.answer { background: var(--panel-2); border-radius: 8px; padding: 12px 14px; min-height: 140px; max-height: 330px; overflow-y: auto; font-size: 14px; color: var(--ink); }
+.answer h3, .answer h4 { margin: 8px 0 4px; font-size: 15px; }
+.answer ul { margin: 4px 0; padding-left: 20px; }
+.answer p { margin: 4px 0; }
+.trace { display: grid; gap: 4px; font: 12.5px/1.45 "IBM Plex Mono", ui-monospace, monospace; }
+.trace .title { font: 500 11px "IBM Plex Sans", system-ui, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-top: 2px; }
+.ev { display: grid; grid-template-columns: 64px 1fr; gap: 10px; color: var(--ink-2); }
+.ev .t { color: var(--ink-3); text-align: right; font-variant-numeric: tabular-nums; }
+.ev.key { color: var(--ink); }
+.ev.fast { color: var(--good); }
+.ev.memo { color: var(--good); font-weight: 600; }
+.ev.tool { color: var(--warn); }
+.empty { color: var(--ink-3); font-style: italic; }
+footer { color: var(--ink-3); font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Speculative Agent <span>vs</span> plain agent</h1>
+    <div class="sub">Same model (Claude Haiku 4.5), same tools, same data. Right side predicts the lookups with a statistical model and fetches them before the model starts.</div>
+  </header>
+
+  <section class="ask" aria-label="Ask both agents">
+    <form class="row" id="form">
+      <label for="q" hidden>Question</label>
+      <input id="q" autocomplete="off" placeholder="Ask about a customer account or a CSM's book…" value="Any overdue or disputed invoices for Netflix?">
+      <button class="go" id="go" type="submit">Ask both</button>
+    </form>
+    <div class="row" id="presets"></div>
+  </section>
+
+  <div class="banner" id="banner"><span class="muted">Ask a question to race the two agents.</span></div>
+
+  <section class="lanes" id="lanes"></section>
+
+  <footer>Prediction: history slots + TF-IDF/logistic-regression classifier (scikit-learn), no LLM in the prediction path. Memory and data: Native. Agent harness: QM.</footer>
+</main>
+
+<script>
+const PRESETS = [
+  ["Overdue invoices: Netflix", "Any overdue or disputed invoices for Netflix?"],
+  ["Ask Netflix again", "Any overdue or disputed invoices for Netflix?"],
+  ["Risk sweep: Marcus Lee's book", "Weekly risk sweep for Marcus Lee: which of their accounts have overdue or disputed invoices or urgent tickets?"],
+  ["QBR prep: Boeing", "Prep me for the QBR with Boeing."],
+  ["Churn risk: Uber", "Is Uber at risk of churning before renewal?"],
+];
+const ARMS = [
+  { id: "plain", name: "Plain agent" },
+  { id: "ours", name: "With speculation" },
+];
+const $ = (id) => document.getElementById(id);
+const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+const secs = (ms) => (ms / 1000).toFixed(2) + " s";
+const kfmt = (n) => (n == null ? "–" : n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n));
+
+function md(text) {
+  const out = [];
+  let list = false;
+  for (const raw of esc(text).split("\n")) {
+    let line = raw.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+    const bullet = /^\s*[-*]\s+(.*)/.exec(line);
+    if (bullet) { if (!list) { out.push("<ul>"); list = true; } out.push(`<li>${bullet[1]}</li>`); continue; }
+    if (list) { out.push("</ul>"); list = false; }
+    const head = /^(#{1,4})\s+(.*)/.exec(line);
+    if (head) out.push(`<h4>${head[2]}</h4>`);
+    else if (line.trim()) out.push(`<p>${line}</p>`);
+  }
+  if (list) out.push("</ul>");
+  return out.join("");
+}
+
+for (const [label, q] of PRESETS) {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "chip"; b.textContent = label;
+  b.addEventListener("click", () => { $("q").value = q; ask(q); });
+  $("presets").appendChild(b);
+}
+
+const state = {};
+function laneHtml(arm) {
+  return `<article class="lane ${arm.id}" id="lane-${arm.id}">
+    <div class="lane-head"><div class="lane-name">${arm.name}</div><span class="pill" id="pill-${arm.id}">idle</span></div>
+    <div class="timer" id="timer-${arm.id}">0.00 s</div>
+    <div class="metrics">
+      <div class="metric"><div class="k">First text</div><div class="v" id="ttft-${arm.id}">–</div></div>
+      <div class="metric"><div class="k">Tokens in</div><div class="v" id="tin-${arm.id}">–</div></div>
+      <div class="metric"><div class="k">Tokens out</div><div class="v" id="tout-${arm.id}">–</div></div>
+      <div class="metric"><div class="k">Cost</div><div class="v" id="cost-${arm.id}">–</div></div>
+      <div class="metric"><div class="k">Tool calls</div><div class="v" id="calls-${arm.id}">–</div></div>
+    </div>
+    <div class="answer" id="answer-${arm.id}"><span class="empty">Waiting for a question.</span></div>
+    <div class="trace" id="trace-${arm.id}"><div class="title">Trace</div></div>
+  </article>`;
+}
+$("lanes").innerHTML = ARMS.map(laneHtml).join("");
+
+function addEv(arm, t, text, cls = "") {
+  const div = document.createElement("div");
+  div.className = `ev ${cls}`;
+  div.innerHTML = `<span class="t">${t == null ? "" : "+" + secs(t)}</span><span>${text}</span>`;
+  $(`trace-${arm}`).appendChild(div);
+}
+
+function tick() {
+  for (const arm of ARMS) {
+    const s = state[arm.id];
+    if (s && s.running) $(`timer-${arm.id}`).textContent = secs(performance.now() - s.start);
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+function finishBanner() {
+  const p = state.plain, o = state.ours;
+  if (!p || !o || !p.trace || !o.trace || p.running || o.running) return;
+  const speed = p.total / o.total;
+  const pin = p.trace.usage ? p.trace.usage.input + p.trace.usage.cacheRead + p.trace.usage.cacheWrite : null;
+  const oin = o.trace.usage ? o.trace.usage.input + o.trace.usage.cacheRead + o.trace.usage.cacheWrite : null;
+  const tok = pin && oin ? `${Math.round(pin / oin)}× fewer input tokens` : oin === 0 ? "zero tokens (answer remembered)" : "";
+  $("banner").innerHTML = `<span class="big">${speed.toFixed(1)}× faster</span><span>${secs(p.total)} → ${secs(o.total)}</span>${tok ? `<span class="big" style="font-size:22px">${tok}</span>` : ""}`;
+}
+
+function onEvent(ev) {
+  const s = state[ev.arm];
+  if (ev.type === "delta") {
+    if (s.ttft == null) { s.ttft = ev.t; $(`ttft-${ev.arm}`).textContent = secs(ev.t); $(`pill-${ev.arm}`).textContent = "writing"; }
+    s.text += ev.text;
+    $(`answer-${ev.arm}`).innerHTML = md(s.text);
+  } else if (ev.type === "tool") {
+    s.calls += 1;
+    $(`calls-${ev.arm}`).textContent = s.calls;
+    $(`pill-${ev.arm}`).textContent = "calling tool";
+    addEv(ev.arm, ev.t, `model called ${esc(ev.name.replace(/^native_/, ""))}`, "tool");
+  } else if (ev.type === "done") {
+    s.running = false; s.total = ev.t;
+    $(`timer-${ev.arm}`).textContent = secs(ev.t);
+    $(`calls-${ev.arm}`).textContent = s.calls;
+    const pill = $(`pill-${ev.arm}`);
+    pill.textContent = ev.status === "RUN_FINISHED" ? "done" : ev.status; pill.className = "pill done";
+    addEv(ev.arm, ev.t, "answer complete", "key");
+  } else if (ev.type === "trace") {
+    s.trace = ev.trace;
+    const tr = ev.trace, u = tr.usage;
+    if (u) {
+      $(`tin-${ev.arm}`).textContent = kfmt(u.input + u.cacheRead + u.cacheWrite);
+      $(`tout-${ev.arm}`).textContent = kfmt(u.output);
+      $(`cost-${ev.arm}`).textContent = "$" + (u.costUsd ?? 0).toFixed(4);
+    }
+    if (ev.arm === "ours") {
+      const pre = (tr.predicted || []);
+      if (pre.length) addEv("ours", null, `predicted ${pre.length} lookups (${[...new Set(pre.map((p) => p.source))].join(" + ")}), ${pre.filter((p) => p.source !== "entity-scope").map((p) => `${p.key.split("{")[0].replace("biz_", "")} ${Math.round((p.confidence || 0) * 100)}%`).join(", ")}`, "key");
+      for (const p of tr.prefetch || []) addEv("ours", null, `prefetched ${p.name.replace("biz_", "")}(${esc(Object.values(p.args || {}).join(", "))}) in ${p.ms == null ? "–" : p.ms + " ms"}`);
+      if (tr.deep && tr.deep.count) addEv("ours", null, `chained ${tr.deep.count} follow-up lookups in ${tr.deep.ms} ms`);
+      if (tr.recallDone != null) addEv("ours", null, `all data ready ${tr.recallDone} ms after the turn started`, "key");
+      if (u && u.memo) addEv("ours", null, "same question + same data → remembered answer, no model call", "memo");
+      else if (u && u.fastPath) addEv("ours", null, "confident → lite turn: no tools, no hidden thinking", "fast");
+      else if (tr.fastReason) addEv("ours", null, `normal turn (${tr.fastReason})${u && u.noThink ? ", thinking off" : ""}`);
+    }
+    finishBanner();
+  }
+}
+
+async function ask(q) {
+  $("go").disabled = true;
+  for (const arm of ARMS) {
+    state[arm.id] = { start: performance.now(), running: true, text: "", calls: 0, ttft: null, total: null, trace: null };
+    $(`answer-${arm.id}`).innerHTML = '<span class="empty">Working…</span>';
+    $(`trace-${arm.id}`).innerHTML = '<div class="title">Trace</div>';
+    for (const k of ["ttft", "tin", "tout", "cost", "calls"]) $(`${k}-${arm.id}`).textContent = "–";
+    const pill = $(`pill-${arm.id}`); pill.textContent = "thinking"; pill.className = "pill live";
+  }
+  $("banner").innerHTML = '<span class="muted">Racing…</span>';
+  const res = await fetch("/api/ask", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q }) });
+  const { id } = await res.json();
+  const es = new EventSource(`/api/events?id=${id}`);
+  es.onmessage = (m) => {
+    onEvent(JSON.parse(m.data));
+    if (ARMS.every((a) => state[a.id].trace)) { es.close(); $("go").disabled = false; }
+  };
+}
+$("form").addEventListener("submit", (e) => { e.preventDefault(); const q = $("q").value.trim(); if (q) ask(q); });
+</script>
+</body>
+</html>
