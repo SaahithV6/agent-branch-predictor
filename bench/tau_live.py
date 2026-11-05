@@ -38,6 +38,7 @@ done = set()
 if os.path.exists(out_path):
     done = {json.loads(l)["i"] for l in open(out_path)}
 lock = Lock()
+CFG = tempfile.mkdtemp(prefix="claude_cfg_")
 
 
 def run(i, t):
@@ -55,6 +56,7 @@ def run(i, t):
     json.dump(cfg, open(cfg_path, "w"))
     env = {**os.environ, "CLAUDE_CODE_OAUTH_TOKEN": token}
     env.pop("ANTHROPIC_API_KEY", None)
+    env["CLAUDE_CONFIG_DIR"] = CFG  # clean CLI config: no account profile (its email leaked into the agent's context)
     cmd = ["nice", "-n", "10", "claude", "-p", "Customer request:\n" + t["instruction"], "--model", "claude-haiku-4-5",
            "--setting-sources", "", "--strict-mcp-config", "--mcp-config", cfg_path, "--tools", "",
            "--allowedTools", "mcp__tau", "--append-system-prompt", SYSTEM, "--max-turns", "40", "--output-format", "stream-json", "--verbose"]

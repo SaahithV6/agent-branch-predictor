@@ -32,11 +32,15 @@ root, out_path = sys.argv[1], sys.argv[2]
 limit = int(sys.argv[3]) if len(sys.argv) > 3 else None
 workers = int(sys.argv[4]) if len(sys.argv) > 4 else 3
 MAX_TURNS = 12
+USER_MODEL = os.environ.get("USER_MODEL", "claude-sonnet-4-5")  # simulated customer; Haiku dropped facts from its own instructions
 here = os.path.dirname(os.path.abspath(__file__))
 policy = open(os.path.join(root, "tau_bench/envs/retail/wiki.md")).read()
 token = os.environ.get("CLAUDE_CODE_OAUTH_TOKEN") or open(os.path.expanduser("~/Documents/qm-native/claude.token")).read().strip()
 env = {**os.environ, "CLAUDE_CODE_OAUTH_TOKEN": token}
 env.pop("ANTHROPIC_API_KEY", None)
+# A clean CLI config dir: the default one carries the account owner's profile, and the CLI tells the
+# agent that email, which it then used to "look up" customers (~90% of multi-turn runs before this).
+env["CLAUDE_CONFIG_DIR"] = tempfile.mkdtemp(prefix="claude_cfg_")
 GREETING = "Hi! How can I help you today?"
 predictor_path = os.environ.get("PREDICTOR")
 fold_of = json.load(open(os.environ["FOLDS"]))["fold_of_group"] if predictor_path else {}
@@ -87,7 +91,7 @@ def claude(args, timeout=300):
 
 def customer(instruction, convo):
     lines = "\n".join(f"{'Agent' if r == 'agent' else 'You'}: {t}" for r, t in convo)
-    _, res = claude([f"Conversation so far:\n{lines}\n\nWrite only your next message to the agent.", "--model", "claude-haiku-4-5",
+    _, res = claude([f"Conversation so far:\n{lines}\n\nWrite only your next message to the agent.", "--model", USER_MODEL,
                      "--system-prompt", user_prompt(instruction), "--tools", "", "--setting-sources", "", "--strict-mcp-config", "--max-turns", "1"], 120)
     return (res.get("result") or "").strip() or "###STOP###"
 

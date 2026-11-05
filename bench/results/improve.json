@@ -1,0 +1,1020 @@
+{
+ "log": [
+  {
+   "round": 0,
+   "config": {
+    "words": true,
+    "cats": true,
+    "siblings": false,
+    "ambiguity": false,
+    "leaves": 63
+   },
+   "report": {
+    "retail": {
+     "score": 107.01,
+     "attached": 0.672,
+     "attached_precision": 0.881,
+     "ready": 0.797,
+     "ready_precision": 0.792,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "find_user_id_by_email": 58
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1883,
+       "get_product_details: scored too low": 680,
+       "list_all_product_types: scored too low": 243,
+       "find_user_id_by_name_zip: scored too low": 228,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 64.45,
+     "attached": 0.339,
+     "attached_precision": 0.878,
+     "ready": 0.612,
+     "ready_precision": 0.722,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 178,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1368,
+       "get_reservation_details: no candidate": 347,
+       "search_onestop_flight: no candidate": 311,
+       "get_flight_status: no candidate": 301,
+       "get_flight_status: scored too low": 139,
+       "search_direct_flight: scored too low": 104
+      }
+     }
+    },
+    "telecom": {
+     "score": 87.66,
+     "attached": 0.382,
+     "attached_precision": 0.947,
+     "ready": 0.989,
+     "ready_precision": 0.619,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 130,
+       "get_data_usage": 4
+      },
+      "missed": {
+       "get_data_usage: scored too low": 32,
+       "get_details_by_id: scored too low": 23,
+       "get_bills_for_customer: no candidate": 7,
+       "get_bills_for_customer: scored too low": 6,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 86.37
+   }
+  },
+  {
+   "round": 1,
+   "try": {
+    "ambiguity": true
+   },
+   "report": {
+    "retail": {
+     "score": 107.91,
+     "attached": 0.679,
+     "attached_precision": 0.882,
+     "ready": 0.8,
+     "ready_precision": 0.792,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "find_user_id_by_email": 58,
+       "get_product_details": 12
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1854,
+       "get_product_details: scored too low": 635,
+       "find_user_id_by_name_zip: scored too low": 257,
+       "list_all_product_types: scored too low": 243,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 65.14,
+     "attached": 0.346,
+     "attached_precision": 0.875,
+     "ready": 0.612,
+     "ready_precision": 0.705,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 191,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1347,
+       "get_reservation_details: no candidate": 347,
+       "search_onestop_flight: no candidate": 316,
+       "get_flight_status: no candidate": 315,
+       "get_flight_status: scored too low": 125,
+       "search_direct_flight: scored too low": 125
+      }
+     }
+    },
+    "telecom": {
+     "score": 93.04,
+     "attached": 0.435,
+     "attached_precision": 0.937,
+     "ready": 0.991,
+     "ready_precision": 0.617,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 145,
+       "get_bills_for_customer": 26,
+       "get_data_usage": 14
+      },
+      "missed": {
+       "get_data_usage: scored too low": 30,
+       "get_details_by_id: scored too low": 13,
+       "get_bills_for_customer: no candidate": 7,
+       "get_bills_for_customer: scored too low": 5,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 88.7
+   },
+   "acceptable": true
+  },
+  {
+   "round": 1,
+   "try": {
+    "siblings": true
+   },
+   "report": {
+    "retail": {
+     "score": 107.6,
+     "attached": 0.672,
+     "attached_precision": 0.881,
+     "ready": 0.809,
+     "ready_precision": 0.789,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "find_user_id_by_email": 58
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1880,
+       "get_product_details: scored too low": 495,
+       "list_all_product_types: scored too low": 243,
+       "find_user_id_by_name_zip: scored too low": 231,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 66.66,
+     "attached": 0.361,
+     "attached_precision": 0.876,
+     "ready": 0.612,
+     "ready_precision": 0.714,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 202,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1353,
+       "get_reservation_details: no candidate": 347,
+       "search_onestop_flight: no candidate": 314,
+       "get_flight_status: no candidate": 307,
+       "get_flight_status: scored too low": 133,
+       "search_direct_flight: scored too low": 119
+      }
+     }
+    },
+    "telecom": {
+     "score": 87.33,
+     "attached": 0.379,
+     "attached_precision": 0.948,
+     "ready": 0.989,
+     "ready_precision": 0.613,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 121,
+       "get_data_usage": 8
+      },
+      "missed": {
+       "get_data_usage: scored too low": 33,
+       "get_details_by_id: scored too low": 18,
+       "get_bills_for_customer: scored too low": 9,
+       "get_bills_for_customer: no candidate": 7,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 87.2
+   },
+   "acceptable": true
+  },
+  {
+   "round": 1,
+   "try": {
+    "words": false
+   },
+   "report": {
+    "retail": {
+     "score": 105.49,
+     "attached": 0.672,
+     "attached_precision": 0.881,
+     "ready": 0.766,
+     "ready_precision": 0.811,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "find_user_id_by_email": 59
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1780,
+       "get_product_details: scored too low": 1162,
+       "find_user_id_by_name_zip: scored too low": 331,
+       "list_all_product_types: scored too low": 243,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 61.44,
+     "attached": 0.308,
+     "attached_precision": 0.877,
+     "ready": 0.612,
+     "ready_precision": 0.721,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 151,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1335,
+       "get_reservation_details: no candidate": 347,
+       "get_flight_status: no candidate": 302,
+       "search_onestop_flight: no candidate": 298,
+       "get_flight_status: scored too low": 138,
+       "search_direct_flight: scored too low": 137
+      }
+     }
+    },
+    "telecom": {
+     "score": 77.42,
+     "attached": 0.309,
+     "attached_precision": 0.965,
+     "ready": 0.929,
+     "ready_precision": 0.614,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 70
+      },
+      "missed": {
+       "get_bills_for_customer: scored too low": 294,
+       "get_data_usage: scored too low": 148,
+       "get_details_by_id: scored too low": 17,
+       "get_bills_for_customer: no candidate": 7,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 81.45
+   },
+   "acceptable": false
+  },
+  {
+   "round": 1,
+   "try": {
+    "cats": false
+   },
+   "report": {
+    "retail": {
+     "score": 106.87,
+     "attached": 0.672,
+     "attached_precision": 0.881,
+     "ready": 0.794,
+     "ready_precision": 0.794,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 140,
+       "find_user_id_by_email": 59
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1867,
+       "get_product_details: scored too low": 724,
+       "find_user_id_by_name_zip: scored too low": 244,
+       "list_all_product_types: scored too low": 243,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 67.26,
+     "attached": 0.367,
+     "attached_precision": 0.875,
+     "ready": 0.612,
+     "ready_precision": 0.753,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 212,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1370,
+       "get_reservation_details: no candidate": 347,
+       "get_flight_status: no candidate": 318,
+       "search_onestop_flight: no candidate": 310,
+       "get_flight_status: scored too low": 122,
+       "search_direct_flight: scored too low": 102
+      }
+     }
+    },
+    "telecom": {
+     "score": 58.91,
+     "attached": 0.267,
+     "attached_precision": 0.978,
+     "ready": 0.645,
+     "ready_precision": 0.631,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 33,
+       "get_customer_by_phone": 5
+      },
+      "missed": {
+       "get_details_by_id: scored too low": 2301,
+       "get_data_usage: scored too low": 40,
+       "get_bills_for_customer: no candidate": 7,
+       "get_bills_for_customer: scored too low": 6,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 77.68
+   },
+   "acceptable": false
+  },
+  {
+   "round": 1,
+   "try": {
+    "leaves": 31
+   },
+   "report": {
+    "retail": {
+     "score": 107.03,
+     "attached": 0.672,
+     "attached_precision": 0.881,
+     "ready": 0.797,
+     "ready_precision": 0.793,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "find_user_id_by_email": 58
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1877,
+       "get_product_details: scored too low": 673,
+       "list_all_product_types: scored too low": 243,
+       "find_user_id_by_name_zip: scored too low": 234,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 60.08,
+     "attached": 0.295,
+     "attached_precision": 0.881,
+     "ready": 0.612,
+     "ready_precision": 0.68,
+     "worst": {
+      "false_positives": {
+       "get_user_details": 134,
+       "get_reservation_details": 130
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1391,
+       "get_reservation_details: no candidate": 347,
+       "search_onestop_flight: no candidate": 316,
+       "get_flight_status: no candidate": 307,
+       "get_flight_status: scored too low": 133,
+       "search_direct_flight: scored too low": 81
+      }
+     }
+    },
+    "telecom": {
+     "score": 87.87,
+     "attached": 0.383,
+     "attached_precision": 0.943,
+     "ready": 0.992,
+     "ready_precision": 0.602,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 145
+      },
+      "missed": {
+       "get_data_usage: scored too low": 21,
+       "get_details_by_id: scored too low": 17,
+       "get_bills_for_customer: no candidate": 7,
+       "get_bills_for_customer: scored too low": 7,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 84.99
+   },
+   "acceptable": false
+  },
+  {
+   "round": 1,
+   "try": {
+    "leaves": 127
+   },
+   "report": {
+    "retail": {
+     "score": 107.0,
+     "attached": 0.672,
+     "attached_precision": 0.881,
+     "ready": 0.797,
+     "ready_precision": 0.793,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "find_user_id_by_email": 58
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1838,
+       "get_product_details: scored too low": 683,
+       "find_user_id_by_name_zip: scored too low": 273,
+       "list_all_product_types: scored too low": 243,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 71.48,
+     "attached": 0.409,
+     "attached_precision": 0.872,
+     "ready": 0.612,
+     "ready_precision": 0.732,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 262,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1377,
+       "get_reservation_details: no candidate": 347,
+       "search_onestop_flight: no candidate": 306,
+       "get_flight_status: no candidate": 296,
+       "get_flight_status: scored too low": 144,
+       "search_direct_flight: scored too low": 95
+      }
+     }
+    },
+    "telecom": {
+     "score": 78.85,
+     "attached": 0.295,
+     "attached_precision": 0.969,
+     "ready": 0.988,
+     "ready_precision": 0.618,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 59
+      },
+      "missed": {
+       "get_data_usage: scored too low": 48,
+       "get_details_by_id: scored too low": 18,
+       "get_bills_for_customer: no candidate": 7,
+       "get_bills_for_customer: scored too low": 6,
+       "get_customer_by_id: scored too low": 3,
+       "get_data_usage: no candidate": 1
+      }
+     }
+    },
+    "mean": 85.78
+   },
+   "acceptable": false
+  },
+  {
+   "round": 1,
+   "kept": {
+    "words": true,
+    "cats": true,
+    "siblings": false,
+    "ambiguity": true,
+    "leaves": 63
+   },
+   "report": {
+    "retail": {
+     "score": 107.91,
+     "attached": 0.679,
+     "attached_precision": 0.882,
+     "ready": 0.8,
+     "ready_precision": 0.792,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "find_user_id_by_email": 58,
+       "get_product_details": 12
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1854,
+       "get_product_details: scored too low": 635,
+       "find_user_id_by_name_zip: scored too low": 257,
+       "list_all_product_types: scored too low": 243,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 65.14,
+     "attached": 0.346,
+     "attached_precision": 0.875,
+     "ready": 0.612,
+     "ready_precision": 0.705,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 191,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1347,
+       "get_reservation_details: no candidate": 347,
+       "search_onestop_flight: no candidate": 316,
+       "get_flight_status: no candidate": 315,
+       "get_flight_status: scored too low": 125,
+       "search_direct_flight: scored too low": 125
+      }
+     }
+    },
+    "telecom": {
+     "score": 93.04,
+     "attached": 0.435,
+     "attached_precision": 0.937,
+     "ready": 0.991,
+     "ready_precision": 0.617,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 145,
+       "get_bills_for_customer": 26,
+       "get_data_usage": 14
+      },
+      "missed": {
+       "get_data_usage: scored too low": 30,
+       "get_details_by_id: scored too low": 13,
+       "get_bills_for_customer: no candidate": 7,
+       "get_bills_for_customer: scored too low": 5,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 88.7
+   }
+  },
+  {
+   "round": 2,
+   "try": {
+    "siblings": true
+   },
+   "report": {
+    "retail": {
+     "score": 107.76,
+     "attached": 0.672,
+     "attached_precision": 0.881,
+     "ready": 0.812,
+     "ready_precision": 0.784,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "find_user_id_by_email": 58
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1856,
+       "get_product_details: scored too low": 442,
+       "find_user_id_by_name_zip: scored too low": 255,
+       "list_all_product_types: scored too low": 243,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 72.06,
+     "attached": 0.415,
+     "attached_precision": 0.876,
+     "ready": 0.612,
+     "ready_precision": 0.706,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 253,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1364,
+       "get_reservation_details: no candidate": 347,
+       "get_flight_status: no candidate": 315,
+       "search_onestop_flight: no candidate": 313,
+       "get_flight_status: scored too low": 125,
+       "search_direct_flight: scored too low": 108
+      }
+     }
+    },
+    "telecom": {
+     "score": 89.91,
+     "attached": 0.403,
+     "attached_precision": 0.947,
+     "ready": 0.991,
+     "ready_precision": 0.62,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 115,
+       "get_bills_for_customer": 28
+      },
+      "missed": {
+       "get_data_usage: scored too low": 28,
+       "get_details_by_id: scored too low": 13,
+       "get_bills_for_customer: no candidate": 7,
+       "get_bills_for_customer: scored too low": 7,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 89.91
+   },
+   "acceptable": false
+  },
+  {
+   "round": 2,
+   "try": {
+    "words": false
+   },
+   "report": {
+    "retail": {
+     "score": 106.31,
+     "attached": 0.672,
+     "attached_precision": 0.881,
+     "ready": 0.783,
+     "ready_precision": 0.803,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "find_user_id_by_email": 58
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1783,
+       "get_product_details: scored too low": 901,
+       "find_user_id_by_name_zip: scored too low": 328,
+       "list_all_product_types: scored too low": 243,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 69.03,
+     "attached": 0.384,
+     "attached_precision": 0.878,
+     "ready": 0.612,
+     "ready_precision": 0.719,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 219,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1296,
+       "get_reservation_details: no candidate": 347,
+       "get_flight_status: no candidate": 332,
+       "search_onestop_flight: no candidate": 297,
+       "search_direct_flight: scored too low": 176,
+       "get_flight_status: scored too low": 108
+      }
+     }
+    },
+    "telecom": {
+     "score": 90.88,
+     "attached": 0.413,
+     "attached_precision": 0.939,
+     "ready": 0.991,
+     "ready_precision": 0.619,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 141,
+       "get_bills_for_customer": 29
+      },
+      "missed": {
+       "get_data_usage: scored too low": 19,
+       "get_details_by_id: scored too low": 16,
+       "get_bills_for_customer: scored too low": 14,
+       "get_bills_for_customer: no candidate": 7,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 88.74
+   },
+   "acceptable": false
+  },
+  {
+   "round": 2,
+   "try": {
+    "cats": false
+   },
+   "report": {
+    "retail": {
+     "score": 106.91,
+     "attached": 0.672,
+     "attached_precision": 0.881,
+     "ready": 0.795,
+     "ready_precision": 0.797,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "find_user_id_by_email": 60
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1923,
+       "get_product_details: scored too low": 711,
+       "list_all_product_types: scored too low": 243,
+       "find_user_id_by_name_zip: scored too low": 188,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 72.25,
+     "attached": 0.417,
+     "attached_precision": 0.874,
+     "ready": 0.612,
+     "ready_precision": 0.753,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 264,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1366,
+       "get_reservation_details: no candidate": 347,
+       "get_flight_status: no candidate": 307,
+       "search_onestop_flight: no candidate": 305,
+       "get_flight_status: scored too low": 133,
+       "search_direct_flight: scored too low": 106
+      }
+     }
+    },
+    "telecom": {
+     "score": 65.29,
+     "attached": 0.311,
+     "attached_precision": 0.966,
+     "ready": 0.683,
+     "ready_precision": 0.623,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 29,
+       "get_bills_for_customer": 21,
+       "get_data_usage": 11,
+       "get_customer_by_phone": 7
+      },
+      "missed": {
+       "get_details_by_id: scored too low": 2050,
+       "get_data_usage: scored too low": 38,
+       "get_bills_for_customer: no candidate": 7,
+       "get_bills_for_customer: scored too low": 6,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 81.48
+   },
+   "acceptable": false
+  },
+  {
+   "round": 2,
+   "try": {
+    "leaves": 31
+   },
+   "report": {
+    "retail": {
+     "score": 111.54,
+     "attached": 0.716,
+     "attached_precision": 0.881,
+     "ready": 0.799,
+     "ready_precision": 0.793,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "get_product_details": 98,
+       "find_user_id_by_email": 58
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1895,
+       "get_product_details: scored too low": 638,
+       "list_all_product_types: scored too low": 243,
+       "find_user_id_by_name_zip: scored too low": 216,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 64.48,
+     "attached": 0.339,
+     "attached_precision": 0.877,
+     "ready": 0.612,
+     "ready_precision": 0.688,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 179,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1369,
+       "get_reservation_details: no candidate": 347,
+       "search_onestop_flight: no candidate": 313,
+       "get_flight_status: no candidate": 312,
+       "get_flight_status: scored too low": 128,
+       "search_direct_flight: scored too low": 103
+      }
+     }
+    },
+    "telecom": {
+     "score": 90.38,
+     "attached": 0.408,
+     "attached_precision": 0.94,
+     "ready": 0.992,
+     "ready_precision": 0.602,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 143,
+       "get_bills_for_customer": 21
+      },
+      "missed": {
+       "get_data_usage: scored too low": 23,
+       "get_details_by_id: scored too low": 12,
+       "get_bills_for_customer: scored too low": 10,
+       "get_bills_for_customer: no candidate": 7,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 88.8
+   },
+   "acceptable": false
+  },
+  {
+   "round": 2,
+   "try": {
+    "leaves": 127
+   },
+   "report": {
+    "retail": {
+     "score": 108.14,
+     "attached": 0.682,
+     "attached_precision": 0.882,
+     "ready": 0.799,
+     "ready_precision": 0.791,
+     "worst": {
+      "false_positives": {
+       "get_order_details": 1201,
+       "get_user_details": 139,
+       "find_user_id_by_email": 58,
+       "get_product_details": 13
+      },
+      "missed": {
+       "find_user_id_by_name_zip: no candidate": 1870,
+       "get_product_details: scored too low": 648,
+       "list_all_product_types: scored too low": 243,
+       "find_user_id_by_name_zip: scored too low": 241,
+       "get_order_details: no candidate": 141,
+       "get_item_details: scored too low": 36
+      }
+     }
+    },
+    "airline": {
+     "score": 70.19,
+     "attached": 0.396,
+     "attached_precision": 0.876,
+     "ready": 0.612,
+     "ready_precision": 0.725,
+     "worst": {
+      "false_positives": {
+       "get_reservation_details": 237,
+       "get_user_details": 134
+      },
+      "missed": {
+       "search_direct_flight: no candidate": 1367,
+       "get_reservation_details: no candidate": 347,
+       "get_flight_status: no candidate": 320,
+       "search_onestop_flight: no candidate": 311,
+       "get_flight_status: scored too low": 120,
+       "search_direct_flight: scored too low": 105
+      }
+     }
+    },
+    "telecom": {
+     "score": 83.64,
+     "attached": 0.341,
+     "attached_precision": 0.962,
+     "ready": 0.99,
+     "ready_precision": 0.621,
+     "worst": {
+      "false_positives": {
+       "get_details_by_id": 55,
+       "get_bills_for_customer": 30
+      },
+      "missed": {
+       "get_data_usage: scored too low": 40,
+       "get_details_by_id: scored too low": 11,
+       "get_bills_for_customer: no candidate": 7,
+       "get_bills_for_customer: scored too low": 5,
+       "get_customer_by_id: scored too low": 3
+      }
+     }
+    },
+    "mean": 87.32
+   },
+   "acceptable": false
+  }
+ ],
+ "final_config": {
+  "words": true,
+  "cats": true,
+  "siblings": false,
+  "ambiguity": true,
+  "leaves": 63
+ },
+ "test": {
+  "start": {
+   "retail": {
+    "attached": 0.663,
+    "precision": 0.892,
+    "ready": 0.794,
+    "ready_precision": 0.863,
+    "wasted_per_chat": 0.61
+   },
+   "airline": {
+    "attached": 0.247,
+    "precision": 0.889,
+    "ready": 0.466,
+    "ready_precision": 0.796,
+    "wasted_per_chat": 0.51
+   },
+   "telecom": {
+    "attached": 0.357,
+    "precision": 0.934,
+    "ready": 0.989,
+    "ready_precision": 0.616,
+    "wasted_per_chat": 2.59
+   }
+  },
+  "final": {
+   "retail": {
+    "attached": 0.664,
+    "precision": 0.892,
+    "ready": 0.794,
+    "ready_precision": 0.834,
+    "wasted_per_chat": 0.76
+   },
+   "airline": {
+    "attached": 0.251,
+    "precision": 0.891,
+    "ready": 0.466,
+    "ready_precision": 0.839,
+    "wasted_per_chat": 0.38
+   },
+   "telecom": {
+    "attached": 0.396,
+    "precision": 0.929,
+    "ready": 0.989,
+    "ready_precision": 0.615,
+    "wasted_per_chat": 2.61
+   }
+  }
+ }
+}
