@@ -1,0 +1,265 @@
+[
+ {
+  "domain": "retail",
+  "exp": "within",
+  "all": {
+   "precision": 0.8791432527078752,
+   "coverage": 0.6113486202876021,
+   "calls_saved": 0.4561120086160474,
+   "predicted": 12279,
+   "hit": 10795,
+   "covered": 11011,
+   "reads": 18011,
+   "calls": 24141,
+   "lead_s_median": 3.74,
+   "lead_s_mean": 7.44
+  },
+  "per_model": {
+   "claude-3-7-sonnet-20250219": {
+    "precision": 0.8980169971671388,
+    "coverage": 0.6057727438801608,
+    "calls_saved": 0.46170983013088274,
+    "predicted": 1765,
+    "hit": 1585,
+    "covered": 1658,
+    "reads": 2737,
+    "calls": 3591,
+    "lead_s_median": 5.49,
+    "lead_s_mean": 9.11
+   },
+   "claude-opus-4-5_high": {
+    "precision": 0.9587685541506322,
+    "coverage": 0.6414401175606171,
+    "calls_saved": 0.5037507212925563,
+    "predicted": 1819,
+    "hit": 1744,
+    "covered": 1746,
+    "reads": 2722,
+    "calls": 3466,
+    "lead_s_median": 3.28,
+    "lead_s_mean": 4.28
+   },
+   "claude-sonnet-4-5_enabled": {
+    "precision": 0.899540757749713,
+    "coverage": 0.6230677764565993,
+    "calls_saved": 0.48819875776397514,
+    "predicted": 1742,
+    "hit": 1567,
+    "covered": 1572,
+    "reads": 2523,
+    "calls": 3220,
+    "lead_s_median": 3.83,
+    "lead_s_mean": 9.77
+   },
+   "gpt-4.1-2025-04-14": {
+    "precision": 0.8712284482758621,
+    "coverage": 0.6259916887041934,
+    "calls_saved": 0.4728881278538813,
+    "predicted": 1856,
+    "hit": 1617,
+    "covered": 1657,
+    "reads": 2647,
+    "calls": 3504,
+    "lead_s_median": 4.21,
+    "lead_s_mean": 6.89
+   },
+   "gpt-4o": {
+    "precision": 0.767632241813602,
+    "coverage": 0.5393307257714037,
+    "calls_saved": 0.3790470372632865,
+    "predicted": 1588,
+    "hit": 1219,
+    "covered": 1241,
+    "reads": 2301,
+    "calls": 3274,
+    "lead_s_median": null,
+    "lead_s_mean": null
+   },
+   "sonnet-35-new": {
+    "precision": 0.8728982616129951,
+    "coverage": 0.6173981499704783,
+    "calls_saved": 0.44270392322890206,
+    "predicted": 3509,
+    "hit": 3063,
+    "covered": 3137,
+    "reads": 5081,
+    "calls": 7086,
+    "lead_s_median": null,
+    "lead_s_mean": null
+   }
+  },
+  "gates": [
+   {
+    "get_order_details": 0.05,
+    "get_user_details": 0.05
+   }
+  ]
+ },
+ {
+  "domain": "airline",
+  "exp": "within",
+  "all": {
+   "precision": 0.8731117824773413,
+   "coverage": 0.0393228472407358,
+   "calls_saved": 0.02885650004890932,
+   "predicted": 331,
+   "hit": 289,
+   "covered": 295,
+   "reads": 7502,
+   "calls": 10223,
+   "lead_s_median": 3.5,
+   "lead_s_mean": 5.87
+  },
+  "per_model": {
+   "claude-3-7-sonnet-20250219": {
+    "precision": 0.875,
+    "coverage": 0.045166402535657686,
+    "calls_saved": 0.03396901072705602,
+    "predicted": 64,
+    "hit": 56,
+    "covered": 57,
+    "reads": 1262,
+    "calls": 1678,
+    "lead_s_median": 6.63,
+    "lead_s_mean": 9.43
+   },
+   "claude-opus-4-5_high": {
+    "precision": 0.9811320754716981,
+    "coverage": 0.040498442367601244,
+    "calls_saved": 0.03299492385786802,
+    "predicted": 53,
+    "hit": 52,
+    "covered": 52,
+    "reads": 1284,
+    "calls": 1576,
+    "lead_s_median": 1.49,
+    "lead_s_mean": 1.9
+   },
+   "claude-sonnet-4-5_enabled": {
+    "precision": 0.7428571428571429,
+    "coverage": 0.022549869904596703,
+    "calls_saved": 0.017184401850627893,
+    "predicted": 35,
+    "hit": 26,
+    "covered": 26,
+    "reads": 1153,
+    "calls": 1513,
+    "lead_s_median": 3.48,
+    "lead_s_mean": 9.36
+   },
+   "gpt-4.1-2025-04-14": {
+    "precision": 0.9642857142857143,
+    "coverage": 0.048993875765529306,
+    "calls_saved": 0.036577400391900716,
+    "predicted": 56,
+    "hit": 54,
+    "covered": 56,
+    "reads": 1143,
+    "calls": 1531,
+    "lead_s_median": -0.0,
+    "lead_s_mean": 4.31
+   },
+   "gpt-4o": {
+    "precision": 0.7619047619047619,
+    "coverage": 0.0471976401179941,
+    "calls_saved": 0.027491408934707903,
+    "predicted": 42,
+    "hit": 32,
+    "covered": 32,
+    "reads": 678,
+    "calls": 1164,
+    "lead_s_median": null,
+    "lead_s_mean": null
+   },
+   "sonnet-35-new": {
+    "precision": 0.8518518518518519,
+    "coverage": 0.03632694248234107,
+    "calls_saved": 0.026077508149221298,
+    "predicted": 81,
+    "hit": 69,
+    "covered": 72,
+    "reads": 1982,
+    "calls": 2761,
+    "lead_s_median": null,
+    "lead_s_mean": null
+   }
+  },
+  "gates": [
+   {
+    "get_reservation_details": 0.95
+   }
+  ]
+ },
+ {
+  "domain": "telecom",
+  "exp": "within",
+  "all": {
+   "precision": 0.91328125,
+   "coverage": 0.15133740028155795,
+   "calls_saved": 0.11563284331301542,
+   "predicted": 1280,
+   "hit": 1169,
+   "covered": 1290,
+   "reads": 8524,
+   "calls": 11156,
+   "lead_s_median": 9.4,
+   "lead_s_mean": 38.92
+  },
+  "per_model": {
+   "claude-3-7-sonnet-20250219": {
+    "precision": 0.924791086350975,
+    "coverage": 0.18692408951294429,
+    "calls_saved": 0.13653846153846153,
+    "predicted": 359,
+    "hit": 332,
+    "covered": 426,
+    "reads": 2279,
+    "calls": 3120,
+    "lead_s_median": 16.16,
+    "lead_s_mean": 57.15
+   },
+   "claude-opus-4-5_high": {
+    "precision": 0.89171974522293,
+    "coverage": 0.14007003501750875,
+    "calls_saved": 0.10967489228358794,
+    "predicted": 314,
+    "hit": 280,
+    "covered": 280,
+    "reads": 1999,
+    "calls": 2553,
+    "lead_s_median": 5.09,
+    "lead_s_mean": 31.13
+   },
+   "claude-sonnet-4-5_enabled": {
+    "precision": 0.9074074074074074,
+    "coverage": 0.1357615894039735,
+    "calls_saved": 0.10061349693251534,
+    "predicted": 270,
+    "hit": 245,
+    "covered": 246,
+    "reads": 1812,
+    "calls": 2445,
+    "lead_s_median": 18.47,
+    "lead_s_mean": 43.59
+   },
+   "gpt-4.1-2025-04-14": {
+    "precision": 0.9258160237388724,
+    "coverage": 0.1388660640920296,
+    "calls_saved": 0.11125740618828177,
+    "predicted": 337,
+    "hit": 312,
+    "covered": 338,
+    "reads": 2434,
+    "calls": 3038,
+    "lead_s_median": 3.57,
+    "lead_s_mean": 19.01
+   }
+  },
+  "gates": [
+   {
+    "get_bills_for_customer": 0.95,
+    "get_details_by_id": 0.92
+   }
+  ]
+ }
+]

@@ -7,3 +7,9 @@ env.local
 *.pkl
 qm-data*/
 .venv/
+data/
+__pycache__/
+*.bak
+bench/results/run_*/
+bench/results/old_models/
+bench/results/*fold*.txt

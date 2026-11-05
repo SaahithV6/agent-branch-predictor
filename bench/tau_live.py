@@ -17,6 +17,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
@@ -47,7 +48,7 @@ def run(i, t):
         if "{fold}" in path:
             path = path.format(fold=json.load(open(os.environ["FOLDS"]))["fold_of_user"][t["user"]])
         p = json.load(open(path))
-        json.dump({**p, "instruction": t["instruction"]}, open(trace + ".pred.json", "w"))
+        json.dump({**p, "instruction": t["instruction"], "model_file": os.path.abspath(path.removesuffix(".json") + ".txt")}, open(trace + ".pred.json", "w"))
         args.append(trace + ".pred.json")
     cfg = {"mcpServers": {"tau": {"command": sys.executable, "args": args}}}
     cfg_path = trace + ".mcp.json"
@@ -56,13 +57,30 @@ def run(i, t):
     env.pop("ANTHROPIC_API_KEY", None)
     cmd = ["nice", "-n", "10", "claude", "-p", "Customer request:\n" + t["instruction"], "--model", "claude-haiku-4-5",
            "--setting-sources", "", "--strict-mcp-config", "--mcp-config", cfg_path, "--tools", "",
-           "--allowedTools", "mcp__tau", "--append-system-prompt", SYSTEM, "--max-turns", "40", "--output-format", "json"]
+           "--allowedTools", "mcp__tau", "--append-system-prompt", SYSTEM, "--max-turns", "40", "--output-format", "stream-json", "--verbose"]
     t0 = time.time()
+    events, meta = [], {"error": "no result"}
     try:
-        p = subprocess.run(cmd, capture_output=True, text=True, timeout=300, env=env, cwd=tempfile.gettempdir())
-        meta = json.loads(p.stdout) if p.stdout.strip().startswith("{") else {"error": p.stderr[-500:]}
-    except subprocess.TimeoutExpired:
-        meta = {"error": "timeout"}
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env, cwd=tempfile.gettempdir())
+        timer = threading.Timer(300, p.kill)
+        timer.start()
+        for line in p.stdout:  # timestamp every stream event: model messages, tool uses, tool results
+            if not line.startswith("{"):
+                continue
+            ev = json.loads(line)
+            if ev.get("type") == "result":
+                meta = ev
+            else:
+                m = ev.get("message") or {}
+                blocks = m.get("content") if isinstance(m.get("content"), list) else []
+                events.append({"t": round(time.time(), 3), "type": ev.get("type"), "usage": m.get("usage"),
+                               "blocks": [{k: b.get(k) for k in ("type", "name", "input", "id", "tool_use_id") if b.get(k) is not None} for b in blocks]})
+        p.wait()
+        timer.cancel()
+        if p.returncode and meta.get("error") == "no result":
+            meta = {"error": "timeout" if p.returncode < 0 else p.stderr.read()[-500:]}
+    except OSError as e:
+        meta = {"error": str(e)}
     calls = [json.loads(l) for l in open(trace)] if os.path.getsize(trace) else []
     for f in (trace, cfg_path, trace + ".pred.json"):
         if os.path.exists(f):
@@ -71,7 +89,7 @@ def run(i, t):
            "actions": [[c["name"].removeprefix("mcp__tau__"), c["args"]] for c in calls if not c.get("prefetched")],
            "prefetched": [[c["name"], c["args"]] for c in calls if c.get("prefetched")],
            "seconds": round(time.time() - t0, 1), "usage": meta.get("usage"), "cost_usd": meta.get("total_cost_usd"),
-           "num_turns": meta.get("num_turns"), "result": (meta.get("result") or "")[:300], "error": meta.get("error") or (meta.get("is_error") and meta.get("subtype"))}
+           "num_turns": meta.get("num_turns"), "t0": round(t0, 3), "trace": calls, "events": events, "result": (meta.get("result") or "")[:300], "error": meta.get("error") or (meta.get("is_error") and meta.get("subtype"))}
     with lock:
         with open(out_path, "a") as f:
             f.write(json.dumps(row) + "\n")

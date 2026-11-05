@@ -1,0 +1,293 @@
+{
+ "target": 0.95,
+ "folds": [
+  {
+   "mode": "strict",
+   "fold": 0,
+   "threshold": {
+    "get_order_details": 0.05
+   },
+   "inner": {
+    "precision": 0.9872340425531915,
+    "coverage": 0.10912511759172154,
+    "calls_saved": 0.07751419979953224,
+    "predicted": 235,
+    "hit": 232,
+    "covered": 232,
+    "reads": 2126,
+    "calls": 2993
+   },
+   "held": {
+    "precision": 0.958904109589041,
+    "coverage": 0.44871794871794873,
+    "calls_saved": 0.36649214659685864,
+    "predicted": 73,
+    "hit": 70,
+    "covered": 70,
+    "reads": 156,
+    "calls": 191
+   }
+  },
+  {
+   "mode": "strict",
+   "fold": 1,
+   "threshold": {
+    "get_order_details": 0.05
+   },
+   "inner": {
+    "precision": 0.9772727272727273,
+    "coverage": 0.11737943585077343,
+    "calls_saved": 0.08363047001620745,
+    "predicted": 264,
+    "hit": 258,
+    "covered": 258,
+    "reads": 2198,
+    "calls": 3085
+   },
+   "held": {
+    "precision": 1.0,
+    "coverage": 0.5238095238095238,
+    "calls_saved": 0.4444444444444444,
+    "predicted": 44,
+    "hit": 44,
+    "covered": 44,
+    "reads": 84,
+    "calls": 99
+   }
+  },
+  {
+   "mode": "strict",
+   "fold": 2,
+   "threshold": {},
+   "inner": {
+    "precision": 0.0,
+    "coverage": 0.0,
+    "calls_saved": 0.0,
+    "predicted": 0,
+    "hit": 0,
+    "covered": 0,
+    "reads": 2106,
+    "calls": 2958
+   },
+   "held": {
+    "precision": 0.0,
+    "coverage": 0.0,
+    "calls_saved": 0.0,
+    "predicted": 0,
+    "hit": 0,
+    "covered": 0,
+    "reads": 176,
+    "calls": 226
+   }
+  },
+  {
+   "mode": "strict",
+   "fold": 3,
+   "threshold": {
+    "get_order_details": 0.05
+   },
+   "inner": {
+    "precision": 0.9775280898876404,
+    "coverage": 0.11972477064220184,
+    "calls_saved": 0.08560183666775992,
+    "predicted": 267,
+    "hit": 261,
+    "covered": 261,
+    "reads": 2180,
+    "calls": 3049
+   },
+   "held": {
+    "precision": 1.0,
+    "coverage": 0.4019607843137255,
+    "calls_saved": 0.3037037037037037,
+    "predicted": 41,
+    "hit": 41,
+    "covered": 41,
+    "reads": 102,
+    "calls": 135
+   }
+  },
+  {
+   "mode": "strict",
+   "fold": 4,
+   "threshold": {
+    "get_order_details": 0.05
+   },
+   "inner": {
+    "precision": 0.988,
+    "coverage": 0.11456400742115028,
+    "calls_saved": 0.08151815181518152,
+    "predicted": 250,
+    "hit": 247,
+    "covered": 247,
+    "reads": 2156,
+    "calls": 3030
+   },
+   "held": {
+    "precision": 0.9482758620689655,
+    "coverage": 0.4365079365079365,
+    "calls_saved": 0.35714285714285715,
+    "predicted": 58,
+    "hit": 55,
+    "covered": 55,
+    "reads": 126,
+    "calls": 154
+   }
+  },
+  {
+   "mode": "text",
+   "fold": 0,
+   "threshold": {
+    "get_order_details": 0.83
+   },
+   "inner": {
+    "precision": 0.9634285714285714,
+    "coverage": 0.396519285042333,
+    "calls_saved": 0.28165720013364515,
+    "predicted": 875,
+    "hit": 843,
+    "covered": 843,
+    "reads": 2126,
+    "calls": 2993
+   },
+   "held": {
+    "precision": 0.9615384615384616,
+    "coverage": 0.4807692307692308,
+    "calls_saved": 0.39267015706806285,
+    "predicted": 78,
+    "hit": 75,
+    "covered": 75,
+    "reads": 156,
+    "calls": 191
+   }
+  },
+  {
+   "mode": "text",
+   "fold": 1,
+   "threshold": {
+    "get_order_details": 0.91
+   },
+   "inner": {
+    "precision": 0.9627959413754228,
+    "coverage": 0.3885350318471338,
+    "calls_saved": 0.2768233387358185,
+    "predicted": 887,
+    "hit": 854,
+    "covered": 854,
+    "reads": 2198,
+    "calls": 3085
+   },
+   "held": {
+    "precision": 1.0,
+    "coverage": 0.5357142857142857,
+    "calls_saved": 0.45454545454545453,
+    "predicted": 45,
+    "hit": 45,
+    "covered": 45,
+    "reads": 84,
+    "calls": 99
+   }
+  },
+  {
+   "mode": "text",
+   "fold": 2,
+   "threshold": {
+    "get_order_details": 0.9
+   },
+   "inner": {
+    "precision": 0.9651860744297719,
+    "coverage": 0.3817663817663818,
+    "calls_saved": 0.2718052738336714,
+    "predicted": 833,
+    "hit": 804,
+    "covered": 804,
+    "reads": 2106,
+    "calls": 2958
+   },
+   "held": {
+    "precision": 1.0,
+    "coverage": 0.5227272727272727,
+    "calls_saved": 0.40707964601769914,
+    "predicted": 92,
+    "hit": 92,
+    "covered": 92,
+    "reads": 176,
+    "calls": 226
+   }
+  },
+  {
+   "mode": "text",
+   "fold": 3,
+   "threshold": {
+    "get_order_details": 0.88
+   },
+   "inner": {
+    "precision": 0.9632107023411371,
+    "coverage": 0.3963302752293578,
+    "calls_saved": 0.2833715972449984,
+    "predicted": 897,
+    "hit": 864,
+    "covered": 864,
+    "reads": 2180,
+    "calls": 3049
+   },
+   "held": {
+    "precision": 1.0,
+    "coverage": 0.37254901960784315,
+    "calls_saved": 0.2814814814814815,
+    "predicted": 38,
+    "hit": 38,
+    "covered": 38,
+    "reads": 102,
+    "calls": 135
+   }
+  },
+  {
+   "mode": "text",
+   "fold": 4,
+   "threshold": {
+    "get_order_details": 0.86
+   },
+   "inner": {
+    "precision": 0.9629213483146067,
+    "coverage": 0.3974953617810761,
+    "calls_saved": 0.28283828382838283,
+    "predicted": 890,
+    "hit": 857,
+    "covered": 857,
+    "reads": 2156,
+    "calls": 3030
+   },
+   "held": {
+    "precision": 0.9523809523809523,
+    "coverage": 0.47619047619047616,
+    "calls_saved": 0.38961038961038963,
+    "predicted": 63,
+    "hit": 60,
+    "covered": 60,
+    "reads": 126,
+    "calls": 154
+   }
+  }
+ ],
+ "strict": {
+  "precision": 0.9722222222222222,
+  "coverage": 0.32608695652173914,
+  "calls_saved": 0.2608695652173913,
+  "predicted": 216,
+  "hit": 210,
+  "covered": 210,
+  "reads": 644,
+  "calls": 805
+ },
+ "text": {
+  "precision": 0.9810126582278481,
+  "coverage": 0.4813664596273292,
+  "calls_saved": 0.38509316770186336,
+  "predicted": 316,
+  "hit": 310,
+  "covered": 310,
+  "reads": 644,
+  "calls": 805
+ }
+}

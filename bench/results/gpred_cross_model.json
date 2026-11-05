@@ -1,0 +1,36 @@
+[
+ {
+  "domain": "retail",
+  "exp": "cross_model",
+  "held_model": "claude-opus-4-5_high",
+  "all": {
+   "precision": 0.9693460490463215,
+   "coverage": 0.5235121234386481,
+   "calls_saved": 0.41113675706866704,
+   "predicted": 1468,
+   "hit": 1423,
+   "covered": 1425,
+   "reads": 2722,
+   "calls": 3466,
+   "lead_s_median": 3.15,
+   "lead_s_mean": 3.94
+  }
+ },
+ {
+  "domain": "retail",
+  "exp": "cross_model",
+  "held_model": "gpt-4.1-2025-04-14",
+  "all": {
+   "precision": 0.8785557986870897,
+   "coverage": 0.6229693993199849,
+   "calls_saved": 0.4706050228310502,
+   "predicted": 1828,
+   "hit": 1606,
+   "covered": 1649,
+   "reads": 2647,
+   "calls": 3504,
+   "lead_s_median": 4.45,
+   "lead_s_mean": 7.21
+  }
+ }
+]

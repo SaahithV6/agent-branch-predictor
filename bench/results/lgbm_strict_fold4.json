@@ -1,0 +1,1 @@
+{"threshold": {"get_order_details": 0.05}, "text": false, "shapes": {"get_order_details": {"\\#[A-Z]\\d+": 926}, "find_user_id_by_email": {"[a-z]+\\.[a-z]+\\d+@[a-z]+\\.[a-z]+": 243}, "get_product_details": {"\\d+": 585}, "get_user_details": {"[a-z]+_[a-z]+_\\d+": 79}}, "vocab": []}

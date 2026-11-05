@@ -1,0 +1,584 @@
+[
+ {
+  "domain": "retail",
+  "exp": "within",
+  "inject": {
+   "precision": 0.882848968528836,
+   "coverage": 0.663316861917717,
+   "calls_saved": 0.49488422186322023,
+   "predicted": 13282,
+   "hit": 11726,
+   "covered": 11947,
+   "reads": 18011,
+   "calls": 24141,
+   "wasted_per_chat": 0.49,
+   "lead_s_median": 3.46,
+   "lead_s_mean": 5.82
+  },
+  "ready": {
+   "precision": 0.8079674889817412,
+   "coverage": 0.7991227583143634,
+   "calls_saved": 0.5962056252847853,
+   "predicted": 17471,
+   "hit": 14116,
+   "covered": 14393,
+   "reads": 18011,
+   "calls": 24141,
+   "wasted_per_chat": 1.05,
+   "lead_s_median": 3.79,
+   "lead_s_mean": 7.91
+  },
+  "per_model": {
+   "claude-3-7-sonnet-20250219": {
+    "inject": {
+     "precision": 0.9022988505747126,
+     "coverage": 0.6587504567044209,
+     "calls_saved": 0.5020885547201337,
+     "predicted": 1914,
+     "hit": 1727,
+     "covered": 1803,
+     "reads": 2737,
+     "calls": 3591,
+     "wasted_per_chat": 0.41,
+     "lead_s_median": 4.61,
+     "lead_s_mean": 8.34
+    },
+    "ready": {
+     "precision": 0.8346550356859636,
+     "coverage": 0.8074534161490683,
+     "calls_saved": 0.6154274575327207,
+     "predicted": 2522,
+     "hit": 2105,
+     "covered": 2210,
+     "reads": 2737,
+     "calls": 3591,
+     "wasted_per_chat": 0.91,
+     "lead_s_median": 5.75,
+     "lead_s_mean": 10.38
+    }
+   },
+   "claude-opus-4-5_high": {
+    "inject": {
+     "precision": 0.9551478083588175,
+     "coverage": 0.6891991182953711,
+     "calls_saved": 0.5412579342181189,
+     "predicted": 1962,
+     "hit": 1874,
+     "covered": 1876,
+     "reads": 2722,
+     "calls": 3466,
+     "wasted_per_chat": 0.19,
+     "lead_s_median": 3.3,
+     "lead_s_mean": 3.84
+    },
+    "ready": {
+     "precision": 0.879936178699641,
+     "coverage": 0.8111682586333578,
+     "calls_saved": 0.6370455856895557,
+     "predicted": 2507,
+     "hit": 2206,
+     "covered": 2208,
+     "reads": 2722,
+     "calls": 3466,
+     "wasted_per_chat": 0.66,
+     "lead_s_median": 3.48,
+     "lead_s_mean": 5.6
+    }
+   },
+   "claude-sonnet-4-5_enabled": {
+    "inject": {
+     "precision": 0.8998401704848162,
+     "coverage": 0.6714229092350377,
+     "calls_saved": 0.5260869565217391,
+     "predicted": 1877,
+     "hit": 1689,
+     "covered": 1694,
+     "reads": 2523,
+     "calls": 3220,
+     "wasted_per_chat": 0.42,
+     "lead_s_median": 3.42,
+     "lead_s_mean": 6.52
+    },
+    "ready": {
+     "precision": 0.821546052631579,
+     "coverage": 0.7938961553705906,
+     "calls_saved": 0.6220496894409938,
+     "predicted": 2432,
+     "hit": 1998,
+     "covered": 2003,
+     "reads": 2523,
+     "calls": 3220,
+     "wasted_per_chat": 0.96,
+     "lead_s_median": 3.8,
+     "lead_s_mean": 9.25
+    }
+   },
+   "gpt-4.1-2025-04-14": {
+    "inject": {
+     "precision": 0.8778280542986425,
+     "coverage": 0.6751038911975822,
+     "calls_saved": 0.5099885844748858,
+     "predicted": 1989,
+     "hit": 1746,
+     "covered": 1787,
+     "reads": 2647,
+     "calls": 3504,
+     "wasted_per_chat": 0.54,
+     "lead_s_median": 3.04,
+     "lead_s_mean": 4.69
+    },
+    "ready": {
+     "precision": 0.8126679462571977,
+     "coverage": 0.8182848507744617,
+     "calls_saved": 0.6181506849315068,
+     "predicted": 2605,
+     "hit": 2117,
+     "covered": 2166,
+     "reads": 2647,
+     "calls": 3504,
+     "wasted_per_chat": 1.07,
+     "lead_s_median": 3.54,
+     "lead_s_mean": 6.49
+    }
+   },
+   "gpt-4o": {
+    "inject": {
+     "precision": 0.7826576576576577,
+     "coverage": 0.6136462407648848,
+     "calls_saved": 0.4312767257177764,
+     "predicted": 1776,
+     "hit": 1390,
+     "covered": 1412,
+     "reads": 2301,
+     "calls": 3274,
+     "wasted_per_chat": 0.84,
+     "lead_s_median": null,
+     "lead_s_mean": null
+    },
+    "ready": {
+     "precision": 0.707166392092257,
+     "coverage": 0.7579313342025207,
+     "calls_saved": 0.5326817348808797,
+     "predicted": 2428,
+     "hit": 1717,
+     "covered": 1744,
+     "reads": 2301,
+     "calls": 3274,
+     "wasted_per_chat": 1.55,
+     "lead_s_median": null,
+     "lead_s_mean": null
+    }
+   },
+   "sonnet-35-new": {
+    "inject": {
+     "precision": 0.8767268862911796,
+     "coverage": 0.6642393229679197,
+     "calls_saved": 0.4762912785774767,
+     "predicted": 3764,
+     "hit": 3300,
+     "covered": 3375,
+     "reads": 5081,
+     "calls": 7086,
+     "wasted_per_chat": 0.5,
+     "lead_s_median": null,
+     "lead_s_mean": null
+    },
+    "ready": {
+     "precision": 0.7982720514366084,
+     "coverage": 0.7994489273765006,
+     "calls_saved": 0.5732430143945809,
+     "predicted": 4977,
+     "hit": 3973,
+     "covered": 4062,
+     "reads": 5081,
+     "calls": 7086,
+     "wasted_per_chat": 1.09,
+     "lead_s_median": null,
+     "lead_s_mean": null
+    }
+   }
+  },
+  "gates": {
+   "inject": {
+    "find_user_id_by_email": 0.05,
+    "get_order_details": 0.05,
+    "get_product_details": 0.97,
+    "get_user_details": 0.05
+   },
+   "cache": {
+    "find_user_id_by_email": 0.05,
+    "get_order_details": 0.05,
+    "get_product_details": 0.14,
+    "get_user_details": 0.05
+   }
+  }
+ },
+ {
+  "domain": "airline",
+  "exp": "within",
+  "inject": {
+   "precision": 0.9025129982668978,
+   "coverage": 0.28672354038922954,
+   "calls_saved": 0.21040790374645407,
+   "predicted": 2308,
+   "hit": 2083,
+   "covered": 2151,
+   "reads": 7502,
+   "calls": 10223,
+   "wasted_per_chat": 0.16,
+   "lead_s_median": 3.06,
+   "lead_s_mean": 7.54
+  },
+  "ready": {
+   "precision": 0.7462039045553145,
+   "coverage": 0.5655825113303119,
+   "calls_saved": 0.41504450748312627,
+   "predicted": 5532,
+   "hit": 4128,
+   "covered": 4243,
+   "reads": 7502,
+   "calls": 10223,
+   "wasted_per_chat": 1.02,
+   "lead_s_median": 4.06,
+   "lead_s_mean": 8.23
+  },
+  "per_model": {
+   "claude-3-7-sonnet-20250219": {
+    "inject": {
+     "precision": 0.9475218658892128,
+     "coverage": 0.28526148969889065,
+     "calls_saved": 0.21454112038140644,
+     "predicted": 343,
+     "hit": 325,
+     "covered": 360,
+     "reads": 1262,
+     "calls": 1678,
+     "wasted_per_chat": 0.09,
+     "lead_s_median": 3.79,
+     "lead_s_mean": 10.32
+    },
+    "ready": {
+     "precision": 0.7331838565022422,
+     "coverage": 0.561014263074485,
+     "calls_saved": 0.42193087008343266,
+     "predicted": 892,
+     "hit": 654,
+     "covered": 708,
+     "reads": 1262,
+     "calls": 1678,
+     "wasted_per_chat": 1.19,
+     "lead_s_median": 5.82,
+     "lead_s_mean": 11.55
+    }
+   },
+   "claude-opus-4-5_high": {
+    "inject": {
+     "precision": 0.9693251533742331,
+     "coverage": 0.24766355140186916,
+     "calls_saved": 0.2017766497461929,
+     "predicted": 326,
+     "hit": 316,
+     "covered": 318,
+     "reads": 1284,
+     "calls": 1576,
+     "wasted_per_chat": 0.05,
+     "lead_s_median": 3.29,
+     "lead_s_mean": 6.24
+    },
+    "ready": {
+     "precision": 0.7749712973593571,
+     "coverage": 0.5280373831775701,
+     "calls_saved": 0.4302030456852792,
+     "predicted": 871,
+     "hit": 675,
+     "covered": 678,
+     "reads": 1284,
+     "calls": 1576,
+     "wasted_per_chat": 0.98,
+     "lead_s_median": 3.98,
+     "lead_s_mean": 7.12
+    }
+   },
+   "claude-sonnet-4-5_enabled": {
+    "inject": {
+     "precision": 0.8909090909090909,
+     "coverage": 0.25585429314830876,
+     "calls_saved": 0.19497686715135493,
+     "predicted": 330,
+     "hit": 294,
+     "covered": 295,
+     "reads": 1153,
+     "calls": 1513,
+     "wasted_per_chat": 0.18,
+     "lead_s_median": 2.77,
+     "lead_s_mean": 8.64
+    },
+    "ready": {
+     "precision": 0.7246558197747184,
+     "coverage": 0.5039028620988725,
+     "calls_saved": 0.38400528750826174,
+     "predicted": 799,
+     "hit": 579,
+     "covered": 581,
+     "reads": 1153,
+     "calls": 1513,
+     "wasted_per_chat": 1.1,
+     "lead_s_median": 4.22,
+     "lead_s_mean": 8.44
+    }
+   },
+   "gpt-4.1-2025-04-14": {
+    "inject": {
+     "precision": 0.8576051779935275,
+     "coverage": 0.23622047244094488,
+     "calls_saved": 0.17635532331809275,
+     "predicted": 309,
+     "hit": 265,
+     "covered": 270,
+     "reads": 1143,
+     "calls": 1531,
+     "wasted_per_chat": 0.22,
+     "lead_s_median": 1.37,
+     "lead_s_mean": 4.18
+    },
+    "ready": {
+     "precision": 0.7518987341772152,
+     "coverage": 0.5328083989501312,
+     "calls_saved": 0.39777922926192033,
+     "predicted": 790,
+     "hit": 594,
+     "covered": 609,
+     "reads": 1143,
+     "calls": 1531,
+     "wasted_per_chat": 0.98,
+     "lead_s_median": 2.24,
+     "lead_s_mean": 5.39
+    }
+   },
+   "gpt-4o": {
+    "inject": {
+     "precision": 0.8106312292358804,
+     "coverage": 0.3613569321533923,
+     "calls_saved": 0.2104810996563574,
+     "predicted": 301,
+     "hit": 244,
+     "covered": 245,
+     "reads": 678,
+     "calls": 1164,
+     "wasted_per_chat": 0.31,
+     "lead_s_median": null,
+     "lead_s_mean": null
+    },
+    "ready": {
+     "precision": 0.6692913385826772,
+     "coverage": 0.6283185840707964,
+     "calls_saved": 0.36597938144329895,
+     "predicted": 635,
+     "hit": 425,
+     "covered": 426,
+     "reads": 678,
+     "calls": 1164,
+     "wasted_per_chat": 1.15,
+     "lead_s_median": null,
+     "lead_s_mean": null
+    }
+   },
+   "sonnet-35-new": {
+    "inject": {
+     "precision": 0.9141630901287554,
+     "coverage": 0.334510595358224,
+     "calls_saved": 0.24013038754074612,
+     "predicted": 699,
+     "hit": 639,
+     "covered": 663,
+     "reads": 1982,
+     "calls": 2761,
+     "wasted_per_chat": 0.15,
+     "lead_s_median": null,
+     "lead_s_mean": null
+    },
+    "ready": {
+     "precision": 0.7773462783171521,
+     "coverage": 0.6261352169525731,
+     "calls_saved": 0.4494748279608837,
+     "predicted": 1545,
+     "hit": 1201,
+     "covered": 1241,
+     "reads": 1982,
+     "calls": 2761,
+     "wasted_per_chat": 0.86,
+     "lead_s_median": null,
+     "lead_s_mean": null
+    }
+   }
+  },
+  "gates": {
+   "inject": {
+    "get_reservation_details": 0.92,
+    "get_user_details": 0.14
+   },
+   "cache": {
+    "get_reservation_details": 0.05,
+    "get_user_details": 0.05
+   }
+  }
+ },
+ {
+  "domain": "telecom",
+  "exp": "within",
+  "inject": {
+   "precision": 0.967381174277726,
+   "coverage": 0.38198029094321917,
+   "calls_saved": 0.29186088203657223,
+   "predicted": 3219,
+   "hit": 3114,
+   "covered": 3256,
+   "reads": 8524,
+   "calls": 11156,
+   "wasted_per_chat": 0.06,
+   "lead_s_median": 3.09,
+   "lead_s_mean": 12.41
+  },
+  "ready": {
+   "precision": 0.6558932169241102,
+   "coverage": 0.9916705771938057,
+   "calls_saved": 0.7577088562208677,
+   "predicted": 11912,
+   "hit": 7813,
+   "covered": 8453,
+   "reads": 8524,
+   "calls": 11156,
+   "wasted_per_chat": 2.25,
+   "lead_s_median": 4.14,
+   "lead_s_mean": 17.19
+  },
+  "per_model": {
+   "claude-3-7-sonnet-20250219": {
+    "inject": {
+     "precision": 0.9691780821917808,
+     "coverage": 0.419482229047828,
+     "calls_saved": 0.30641025641025643,
+     "predicted": 876,
+     "hit": 849,
+     "covered": 956,
+     "reads": 2279,
+     "calls": 3120,
+     "wasted_per_chat": 0.06,
+     "lead_s_median": 3.24,
+     "lead_s_mean": 26.2
+    },
+    "ready": {
+     "precision": 0.6417541692402717,
+     "coverage": 0.9956121105748135,
+     "calls_saved": 0.7272435897435897,
+     "predicted": 3238,
+     "hit": 2078,
+     "covered": 2269,
+     "reads": 2279,
+     "calls": 3120,
+     "wasted_per_chat": 2.54,
+     "lead_s_median": 5.26,
+     "lead_s_mean": 20.4
+    }
+   },
+   "claude-opus-4-5_high": {
+    "inject": {
+     "precision": 0.9627329192546584,
+     "coverage": 0.38819409704852426,
+     "calls_saved": 0.3039561300430866,
+     "predicted": 805,
+     "hit": 775,
+     "covered": 776,
+     "reads": 1999,
+     "calls": 2553,
+     "wasted_per_chat": 0.07,
+     "lead_s_median": 3.39,
+     "lead_s_mean": 6.08
+    },
+    "ready": {
+     "precision": 0.7435514018691589,
+     "coverage": 0.9969984992496248,
+     "calls_saved": 0.7806502154328241,
+     "predicted": 2675,
+     "hit": 1989,
+     "covered": 1993,
+     "reads": 1999,
+     "calls": 2553,
+     "wasted_per_chat": 1.5,
+     "lead_s_median": 3.98,
+     "lead_s_mean": 7.6
+    }
+   },
+   "claude-sonnet-4-5_enabled": {
+    "inject": {
+     "precision": 0.9679144385026738,
+     "coverage": 0.40286975717439294,
+     "calls_saved": 0.2985685071574642,
+     "predicted": 748,
+     "hit": 724,
+     "covered": 730,
+     "reads": 1812,
+     "calls": 2445,
+     "wasted_per_chat": 0.05,
+     "lead_s_median": 3.35,
+     "lead_s_mean": 7.18
+    },
+    "ready": {
+     "precision": 0.717948717948718,
+     "coverage": 0.9950331125827815,
+     "calls_saved": 0.7374233128834355,
+     "predicted": 2496,
+     "hit": 1792,
+     "covered": 1803,
+     "reads": 1812,
+     "calls": 2445,
+     "wasted_per_chat": 1.54,
+     "lead_s_median": 4.05,
+     "lead_s_mean": 7.58
+    }
+   },
+   "gpt-4.1-2025-04-14": {
+    "inject": {
+     "precision": 0.9696202531645569,
+     "coverage": 0.32621199671322926,
+     "calls_saved": 0.26135615536537193,
+     "predicted": 790,
+     "hit": 766,
+     "covered": 794,
+     "reads": 2434,
+     "calls": 3038,
+     "wasted_per_chat": 0.05,
+     "lead_s_median": 1.94,
+     "lead_s_mean": 6.79
+    },
+    "ready": {
+     "precision": 0.5578075934912932,
+     "coverage": 0.981101068200493,
+     "calls_saved": 0.7860434496379197,
+     "predicted": 3503,
+     "hit": 1954,
+     "covered": 2388,
+     "reads": 2434,
+     "calls": 3038,
+     "wasted_per_chat": 3.4,
+     "lead_s_median": 3.62,
+     "lead_s_mean": 29.41
+    }
+   }
+  },
+  "gates": {
+   "inject": {
+    "get_bills_for_customer": 0.96,
+    "get_customer_by_phone": 0.05,
+    "get_data_usage": 0.91,
+    "get_details_by_id": 0.93
+   },
+   "cache": {
+    "get_bills_for_customer": 0.11,
+    "get_customer_by_phone": 0.05,
+    "get_data_usage": 0.32,
+    "get_details_by_id": 0.05
+   }
+  }
+ }
+]

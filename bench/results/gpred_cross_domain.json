@@ -1,0 +1,59 @@
+[
+ {
+  "domain": "retail",
+  "exp": "cross_domain",
+  "all": {
+   "precision": 0.5572139303482587,
+   "coverage": 0.006329465326744767,
+   "calls_saved": 0.004722256741642848,
+   "predicted": 201,
+   "hit": 112,
+   "covered": 114,
+   "reads": 18011,
+   "calls": 24141,
+   "lead_s_median": 6.63,
+   "lead_s_mean": 11.91
+  },
+  "gates": {
+   "*": 0.82
+  }
+ },
+ {
+  "domain": "airline",
+  "exp": "cross_domain",
+  "all": {
+   "precision": 0.7552447552447552,
+   "coverage": 0.029992002132764595,
+   "calls_saved": 0.02200919495255796,
+   "predicted": 286,
+   "hit": 216,
+   "covered": 225,
+   "reads": 7502,
+   "calls": 10223,
+   "lead_s_median": 12.62,
+   "lead_s_mean": 21.72
+  },
+  "gates": {
+   "*": 0.77
+  }
+ },
+ {
+  "domain": "telecom",
+  "exp": "cross_domain",
+  "all": {
+   "precision": 0.0,
+   "coverage": 0.0,
+   "calls_saved": 0.0,
+   "predicted": 0,
+   "hit": 0,
+   "covered": 0,
+   "reads": 8524,
+   "calls": 11156,
+   "lead_s_median": null,
+   "lead_s_mean": null
+  },
+  "gates": {
+   "*": 0.73
+  }
+ }
+]

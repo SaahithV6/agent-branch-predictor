@@ -6,6 +6,28 @@ Built on [QM](https://github.com/yc-software/qm) (agent harness) and [Native](ht
 
 **Honest summary.** All numbers below come from my own benchmarks (simulated skills and a simulated business help desk, 10-54 runs per comparison), not production traffic. When the predictor guesses, it is right ~94% of the time; it guesses for about two-thirds of lookups. Prediction alone made turns ~20% faster (9.5s -> 7.4s median). The bigger wins (e.g. 27.7s -> 9.5s) come from the full stack, which adds a fast answer path, thinking off, and tool pruning. On one-off requests, or when tools already take milliseconds, prediction alone does little.
 
+## v2: learned predictor on real chat transcripts (2026-11-05)
+
+The hand-learned rule table is replaced by a learned model (`bench/gpred.py`), chosen after a literature review (`reports/Agent tool call prediction.md`):
+
+- **Architecture.** No LLM in the loop. After every tool result and every customer message, each read tool's argument is paired with every candidate value (fields of earlier results, id-like tokens and dates in the customer's words, names mapped to codes through alias tables learned from table-shaped results, e.g. "New York" -> JFK). A LightGBM classifier scores each candidate on generic features (field vs argument name, recency, list position, how many places the value appears, what the agent already opened, call history). ~5 ms per prediction on CPU; per-guess SHAP explanations are computed after the lookups start, so nothing waits on them.
+- **Two gates.** A per-tool Wilson lower bound on precision, picked out of fold. Strict guesses (score >= 0.9, at most 3 per lookup) are attached to the agent's context; looser ones only prefetch into a cache, so a wrong one costs a wasted read, never a wrong record in front of the model. Only read-only tools are ever predicted.
+- **Data.** 6,398 real multi-turn chats (tau-bench + tau2-bench public trajectories; 6 agent models: GPT-4o, GPT-4.1, Claude 3.5 Sonnet, 3.7 Sonnet, Sonnet 4.5, Opus 4.5). The predictor only sees what the customer has said so far. Splits are by customer. The tau2 trajectories are not redistributed here (`bench/traces.py` documents where to get them).
+
+**Held-out customers** (`bench/gpred.py within`):
+
+| Domain | Attached to context | Precision | Ready before the agent asks (either gate) | Head start (median) |
+|---|---|---|---|---|
+| Retail | 66% of lookups | 88% | 80% | 3.8 s |
+| Telecom | 38% | 97% | 99% | 4.1 s |
+| Airline | 29% | 90% | 57% | 4.1 s |
+
+Unseen agent models (retail): Opus 4.5 97% precision / 52% coverage, GPT-4.1 88% / 62%. A domain with no traces at all does not work; each domain trains on its own common requests.
+
+**Live A/B, solo mode, tools at ~0.8 s** (`bench/tau_live.py`, `ab3_*`): 50% fewer tool calls, 44% fewer turns, cost -11% per task (cache reads fall, cache writes barely move because attached records are new content), time -10% on tasks both arms answered correctly. Accuracy rule: prediction may not be worse, tested as non-inferiority (one-sided 95% lower bound of the paired accuracy difference above -3 points). Attaching every guess passed (-2.4) but four tasks the baseline always gets right regressed (too many records in context); attaching less clears most of them at the price of most of the savings. Identical baseline runs themselves flip 5-10 answers, so verdicts need several runs per task; that is the next experiment.
+
+**Also here:** `bench/tau_chat.py` (multi-turn live runs with tau-bench's user simulator, timestamped traces, "safe" cache-only mode that cannot change the agent's inputs), `bench/improve.py` (worst-case-driven structural search on validation customers, scored once on untouched test customers), `bench/prune.py` (learned field trimming for attachments: telecom attachments -52%, retail/airline -13%, 99.9% of later-used values kept, ~20-40 us per record).
+
 ## Live agent on tau-bench retail (Claude Haiku 4.5)
 
 `bench/tau_live.py` runs a real agent (Claude Haiku 4.5 through the Claude Code CLI, tau-bench's retail policy, the benchmark's tools served by `bench/tau_mcp.py`) in solo mode on all 500 retail train tasks and 115 test tasks, recording every tool call.
