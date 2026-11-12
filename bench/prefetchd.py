@@ -99,7 +99,17 @@ class Session:
         self.seen = time.time()
 
     def readable(self, name):
-        return name in TR.READ[self.domain] and not self.env._is_mutating_tool(name)
+        return name in TR.READ.get(self.domain, (name,)) and not self.env._is_mutating_tool(name)
+
+
+def values(args):
+    """Every scalar argument value, lists included, as strings."""
+    out = set()
+    for v in args.values():
+        for x in v if isinstance(v, list) else [v]:
+            if not isinstance(x, (dict, list)):
+                out.add(str(x))
+    return out
 
 
 class Shard:
@@ -121,7 +131,9 @@ class Shard:
         if k not in self.preds:
             meta = os.path.join(self.models, f"gpred_{domain}_folds.json")
             m = json.load(open(meta)) if os.path.exists(meta) else {}
-            self.preds[k] = (G.Predictor(os.path.join(self.models, f"gpred_{domain}_fold{fold}")),
+            path = os.path.join(self.models, f"gpred_{domain}_fold{fold}")
+            # no model for this domain yet: serve its tools unpredicted rather than refuse the session
+            self.preds[k] = (G.Predictor(path) if os.path.exists(path + ".txt") else None,
                              (m.get("window", WINDOW), m.get("text_chars", TEXT_CHARS)))
         return self.preds[k]
 
@@ -201,6 +213,10 @@ class Shard:
                     s.cache.clear()
                     s.attached.clear()
                     s.used.clear()
+                    # only reads of what the write touched become rereadable; the rest still count as called
+                    touched = values(args)
+                    s.window = collections.deque(((k_, n_, r_, g_ if values(json.loads(k_[len(n_):])) & touched else s.gen)
+                                                  for k_, n_, r_, g_ in s.window), maxlen=s.window.maxlen)
                     self.stats.add(writes=1)
             else:
                 write = False
@@ -218,6 +234,8 @@ class Shard:
 
     # prediction ---------------------------------------------------------------------------------
     def schedule(self, sid):
+        if self.get(sid).pred is None:
+            return
         with self.cv:
             if sid in self.queued:
                 self.stats.add(coalesced=1)
@@ -249,9 +267,10 @@ class Shard:
         with s.lock:
             gen, text = s.gen, s.text
             results = [(n, r) for _, n, r, _ in s.window]
-            # "already called" holds only within a generation: after a write or a new ticket the agent
-            # rereads records it saw before, and those rereads are predictable
+            # "already called" holds only within a generation: after a new ticket, or a write touching
+            # the record, the agent rereads what it saw before, and those rereads are predictable
             called = {k for k, _, _, g in s.window if g == gen}
+            seen = {k for k, *_ in s.window} - called  # rereads: prefetch them, but the agent already saw them
         guesses = s.pred.predict(text, results, called, explain=False)
         self.stats.time("predict", (time.perf_counter() - t0) * 1000)
         self.stats.add(predictions=1)
@@ -265,7 +284,7 @@ class Shard:
                 name = k[:k.index("{")]
                 if not s.readable(name):
                     continue
-                if g["inject"]:
+                if g["inject"] and k not in seen:
                     if s.attached.get(k) != gen:
                         self.stats.add(attached=1)
                     s.attached[k] = gen

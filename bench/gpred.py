@@ -22,6 +22,7 @@ import statistics as st
 import sys
 import zlib
 from collections import Counter
+from functools import lru_cache
 
 import lightgbm as lgb
 import numpy as np
@@ -70,10 +71,12 @@ def key(name, args):
     return name + json.dumps(args, sort_keys=True)
 
 
+@lru_cache(maxsize=1 << 16)  # pure; predict asks for the same tool, arg and path names every time
 def toks(s):
-    return {w.rstrip("s") for w in re.split(r"[^a-z]+", s.lower()) if len(w) > 1 and w not in ("id", "k", "get", "detail")}
+    return frozenset(w.rstrip("s") for w in re.split(r"[^a-z]+", s.lower()) if len(w) > 1 and w not in ("id", "k", "get", "detail"))
 
 
+@lru_cache(maxsize=1 << 16)  # pure; the same tool/source/path triples hash every prediction
 def h(*parts, n=4093):
     return zlib.crc32("|".join(map(str, parts)).encode()) % n
 
@@ -119,6 +122,14 @@ class Featurizer:
                             self.lexicon[name.lower()] = code
         self.year = years.most_common(1)[0][0] if years else None
 
+    def matching(self, tool, a, by_shape):
+        """Indices of sources whose value shape this argument has taken in training, in source order."""
+        shp = self.shapes.get(f"{tool}|{a}")
+        if not shp:
+            return []
+        hits = [by_shape[x] for x in shp if x in by_shape]
+        return sorted(i for h_ in hits for i in h_) if len(hits) > 1 else hits[0] if hits else []
+
     def names(self):
         """Feature names, in row order, for explanations."""
         return (["tool", "source tool", "source field"] + GENERIC + ["results so far", "calls to this tool", "number of arguments"]
@@ -148,6 +159,9 @@ class Featurizer:
         src += [(-3, "TEXT", ("date",), d, (), 0, "") for d in dates(low, self.year)]
         src += [(-2, "TEXT", ("alias",), code, (), 1.0, name) for name, code in self.lexicon.items()
                 if re.search(r"\b" + re.escape(name) + r"\b", low)]
+        by_shape = {}
+        for i, x in enumerate(src):
+            by_shape.setdefault(T.shape(x[3], 1), []).append(i)
         n, out = len(results), []
         hist = Counter(name for name, _ in results)
         spec = [] if self.generic else [hist[x] for x in self.tools] + [w in low for w in self.vocab]
@@ -162,8 +176,7 @@ class Featurizer:
             if CONFIG["siblings"] or CONFIG["ambiguity"]:
                 opened, slot_n, slot_src = Counter(), Counter(), Counter()
                 for a in args:
-                    shp = self.shapes.get(f"{tool}|{a}", Counter())
-                    ok_src = [(j, pat, v) for j, _, pat, v, *_ in src if shp.get(T.shape(v, 1))]
+                    ok_src = [(src[i][0], src[i][2], src[i][3]) for i in self.matching(tool, a, by_shape)]
                     slot_n[(tool, a)] = len({v for *_, v in ok_src})
                     slot_src[(tool, a)] = len({(j, pat) for j, pat, _ in ok_src})
                     for j, pat, v in ok_src:
@@ -172,9 +185,10 @@ class Featurizer:
             for a in args:
                 shp, atoks = self.shapes.get(f"{tool}|{a}", Counter()), toks(a)
                 total = sum(shp.values()) or 1
-                for j, stool, pat, v, lab, conf, phrase in src:
-                    freq = shp.get(T.shape(v, 1), 0)
-                    if not freq or (len(args) == 1 and key(tool, {a: v}) in called):
+                for i in self.matching(tool, a, by_shape):
+                    j, stool, pat, v, lab, conf, phrase = src[i]
+                    freq = shp[T.shape(v, 1)]
+                    if len(args) == 1 and key(tool, {a: v}) in called:
                         continue
                     steps = [p for p in pat if p not in ("*", "{k}")]
                     ptoks = toks(" ".join(steps))
@@ -291,15 +305,33 @@ def score(pairs):
 
 
 def pick(trs, tools, target=None):
-    """Per-tool Wilson gate; tools=None picks one threshold for every tool (needed for unseen tools)."""
+    """Per-tool Wilson gate, then one pooled gate "*" for the tools too rare to earn their own (in a
+    large catalog most tools are rare). The pooled gate is certified on those rare tools' predictions
+    only, so the common tools can't vouch for them. tools=None: one gate for every tool (unseen tools)."""
     target = TARGET if target is None else target
+    by = {}  # precision only depends on each tool's own keys: (best score, hit), collected once
+    for tr in trs:
+        for k, ss in tr["best"].items():
+            by.setdefault(k.split("{")[0], []).append((max(s for s, _ in ss), k in tr["actual"]))
+    xs = [round(float(x), 2) for x in np.arange(0.05, 1.0, 0.01)]
+
+    def first_ok(preds):
+        if not preds:
+            return None
+        s, h = np.array(preds, dtype=np.float64).T
+        for x in xs:
+            on = s >= x
+            n = int(on.sum())
+            if n >= 20 and T.wilson(int(h[on].sum()), n, 1.645) >= target:
+                return x
     th = {}
-    for tool in tools or ["*"]:
-        for x in np.arange(0.05, 1.0, 0.01):
-            s = score([(tr, {tool: x}) for tr in trs])
-            if s["predicted"] >= 20 and T.wilson(s["hit"], s["predicted"], 1.645) >= target:
-                th[tool] = round(float(x), 2)
-                break
+    for tool in tools or []:
+        x = first_ok(by.get(tool, []))
+        if x is not None:
+            th[tool] = x
+    x = first_ok([p for t, ps in by.items() if t not in th for p in ps])
+    if x is not None:
+        th["*"] = x
     return th
 
 
@@ -347,6 +379,10 @@ class Predictor:
         self.inject, self.cache = meta["inject"], meta["cache"]
         self.model = lgb.Booster(model_file=path + ".txt")
 
+    @staticmethod
+    def gate(th, tool):
+        return th.get(tool, th.get("*", 2))
+
     def predict(self, text, results, called, explain=True):
         """explain=False returns at once with "why" empty; call explain_last() afterwards (off the
         critical path: SHAP costs ~6 ms per explained guess, scoring all candidates ~10 ms)."""
@@ -358,13 +394,13 @@ class Predictor:
         fired = []
         for k, s in calls(self.fz, rows, sc, called).items():
             tool = k.split("{")[0]
-            if s < self.cache.get(tool, 2) and s < self.inject.get(tool, 2):
+            if s < self.gate(self.cache, tool) and s < self.gate(self.inject, tool):
                 continue
             args = json.loads(k[len(tool):])
             idx = [max((i for i, r in enumerate(rows) if r[0] == tool and r[1] == a and r[2] == str(v)), key=lambda i: sc[i])
                    for a, v in args.items()] or [next(i for i, r in enumerate(rows) if r[0] == tool)]
             fired.append((k, s, tool, idx))
-        out = sorted(({"key": k, "score": round(float(s), 3), "inject": s >= self.inject.get(tool, 2), "cache": s >= self.cache.get(tool, 2),
+        out = sorted(({"key": k, "score": round(float(s), 3), "inject": s >= self.gate(self.inject, tool), "cache": s >= self.gate(self.cache, tool),
                        "why": [], "_idx": idx} for k, s, tool, idx in fired), key=lambda x: -x["score"])
         self._last = (rows, X, sc, out)
         if explain:

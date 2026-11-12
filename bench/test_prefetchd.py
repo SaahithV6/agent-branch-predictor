@@ -185,6 +185,31 @@ def test_reread_after_write_is_predicted():
     settle(sh, s)
     r = sh.call(sid, *READ)
     assert r["source"] == "cache" and json.loads(r["result"])["status"] == "cancelled", r["source"]
+    assert not r["attached"]  # the agent saw this record before the write: prefetch it, don't attach it again
+
+
+def test_write_reopens_only_what_it_touched():
+    sh = shard(Fake([]))
+    sid = sh.open("retail", 0, None)["sid"]
+    s = sh.get(sid)
+    other = next(o for o in s.env.tools.db.orders if o != ORDER)
+    OTHER = ("get_order_details", {"order_id": other})
+    sh.call(sid, *READ)
+    sh.call(sid, *OTHER)
+    s.pred.keys = [P.G.key(*READ), P.G.key(*OTHER)]  # Fake skips keys in "called", like the real predictor
+    sh.call(sid, *WRITE)  # cancels ORDER only
+    settle(sh, s)
+    assert sh.call(sid, *READ)["source"] == "cache"
+    assert sh.call(sid, *OTHER)["source"] == "exec"
+
+
+def test_domain_without_model_is_served_unpredicted():
+    sh = P.Shard(0, "/nonexistent")
+    sid = sh.open("retail", 0, None)["sid"]
+    sh.text(sid, f"about order {ORDER}")
+    assert sh.call(sid, *READ)["source"] == "exec"
+    assert json.loads(sh.call(sid, *WRITE)["result"])["status"] == "cancelled"
+    assert sh.stats.n["predictions"] == 0 and sh.stats.n["predict_errors"] == 0
 
 
 if __name__ == "__main__":

@@ -32,6 +32,42 @@ Unseen agent models (retail): Opus 4.5 97% precision / 52% coverage, GPT-4.1 88%
 
 **Also here:** `bench/tau_chat.py` (multi-turn live runs with tau-bench's user simulator, timestamped traces, "safe" cache-only mode that cannot change the agent's inputs), `bench/improve.py` (worst-case-driven structural search on validation customers, scored once on untouched test customers), `bench/prune.py` (learned field trimming for attachments: telecom attachments -52%, retail/airline -13%, 99.9% of later-used values kept, ~20-40 us per record).
 
+## prefetchd: the predictor as a service, 1M real tool calls (2026-11-11)
+
+`bench/prefetchd.py` runs the predictor as a long-lived service over real tools: tau2-bench's own retail, airline and telecom environments, their databases and tool code, writes included (`bench/realtools.py`; a fresh replay reproduces 100% of recorded retail and airline reads, 96.6% of telecom's, whose customer also changes device state with tools that are not replayed). The agent sends customer text and tool calls over HTTP; a predictor thread per shard guesses the next reads after every event and an IO pool runs them. Every write bumps a generation that drops the cache and any guess computed before it; prefetches are never writes (tau2's own mutating flag decides). Memory per session is bounded: a window of recent reads, a text tail, an LRU cache, LRU session eviction.
+
+`bench/workload.py` drives it with the recorded trajectories chained 50 tickets per session (sessions run to ~500 calls, far past the 7-20 the model was trained on), each ticket on its task's own starting state, and checks every answer against a shadow environment that runs the same call directly.
+
+**1,030,755 real tool calls** (8 shards, 120 concurrent client threads, 0.2 s think time, `bench/results/prefetchd/run_1m.json`):
+
+| | |
+|---|---|
+| Wrong results served | **0** (571k served from prefetch) |
+| Reads ready before the agent asked | 71.7% (73.0% in a session's first 20 calls, 71.2% at calls 100-500) |
+| Reads attached to context | 40.9%, 77% precision |
+| Prefetches used | 46% |
+| Throughput | 220 calls/s, 0 errors |
+| Server time per call | p50 0.13 ms, p99 1.8 ms |
+| Memory | 1.24 GB max per shard |
+
+The limit is the predictor's queue: p99 lag 1.4 s under load, so some reads arrive before their guess is made. Prediction is 78% Python feature building (GIL-bound), 12% LightGBM; caching four pure helpers cut it 31% with identical output.
+
+**Does the service need to know where a ticket ends?** 300k-call runs, models trained on the service's own bounded view (`bench/longctx.py`: last 8 reads, last 1,500 characters, each training chat also replayed after 1-3 other chats of the same customer fold):
+
+| | Ready before asked | Attached | Attach precision |
+|---|---|---|---|
+| Told where each ticket starts (memory reset) | **76.7%** | **50.4%** | 73.6% |
+| Never told (one unbroken session) | 66.2% | 25.4% | 42% |
+| Never told, models trained on single chats | 63.4% | 29.5% | 23% |
+
+Told, it beats the 1M run (71.7% ready, 40.9% attached at 77%). Never told, prefetching still works (a cached result is only served when the agent issues that exact call, so it is never wrong) but attachments pick up the previous customer's records: run such a deployment cache-only. Two rules got it there. After a write, only reads sharing an argument value with it (cancel order X: reread order X) become predictable again, instead of everything; before, one unbroken telecom session fell to 11% ready because rereads were never predicted, and making all of them predictable sank attach precision to 25%. And a predicted reread is prefetched but not attached, since the agent already saw that record.
+
+**Very long sessions** (250 tickets chained, ~2,500 calls per session, 312k calls, `long_sessions.json`): ready ahead 77% in a session's first 500 calls, 76.5% at calls 500-2,000, 72.6% past 2,000; attach precision 73.6%; 918 MB per shard, 0 mismatches. A domain with no trained model is served unpredicted rather than refused.
+
+**Scaling out** (`shards16.json`): prediction is one GIL-bound thread per shard, so shards are the knob. 16 shards instead of 8 on the same 24 cores: ready ahead 79.9%, 243 calls/s, queue lag p50 0.15 ms / p90 47 ms / p99 329 ms (8 shards: 7 / 172 / 701 ms), client call p50 6.4 ms, 882 MB per shard. Most of the remaining tail is harness cost: every ticket builds a fresh tau2 environment inside the shard (airline ~95 ms, holding the GIL) while 10 client processes replay shadow environments on the same cores. A deployment over a shared database builds none.
+
+`python3 -I bench/test_prefetchd.py <tau-bench>` checks the invariants on real retail tools: prefetched results equal direct ones, writes invalidate, a write during a prediction drops its guesses, writes are never prefetched, memory stays bounded over 1,500 calls, a crashing predictor does not stop the service.
+
 ## Live agent on tau-bench retail (Claude Haiku 4.5)
 
 `bench/tau_live.py` runs a real agent (Claude Haiku 4.5 through the Claude Code CLI, tau-bench's retail policy, the benchmark's tools served by `bench/tau_mcp.py`) in solo mode on all 500 retail train tasks and 115 test tasks, recording every tool call.

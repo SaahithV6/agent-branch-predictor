@@ -1,0 +1,102 @@
+{
+ "config": {
+  "tau": "/home/lain_iwakura/Documents/tau-bench",
+  "calls": 300000,
+  "chain": 50,
+  "clients": 10,
+  "threads": 12,
+  "think": 0.2,
+  "shards": 16,
+  "port": 9600,
+  "blind": false,
+  "domains": "retail,airline,telecom",
+  "models": "bench/results/live_long",
+  "out": "bench/results/prefetchd/shards16.json"
+ },
+ "env": {},
+ "tool_calls": 312350,
+ "wall_s": 1284.5,
+ "calls_per_s": 243.2,
+ "workflow_errors": 0,
+ "error_examples": [],
+ "served": {
+  "cache": 193468,
+  "exec": 118137,
+  "inflight": 141,
+  "memo": 604
+ },
+ "mismatches": {},
+ "reads": 242360,
+ "ready_ahead": 0.7988,
+ "attached": 0.5285,
+ "attach_precision": 0.7431,
+ "prefetch_precision": 0.3644,
+ "by_position": [
+  {
+   "calls_into_session": "<20",
+   "reads": 15436,
+   "ready_ahead": 0.819,
+   "attached": 0.5427
+  },
+  {
+   "calls_into_session": "<100",
+   "reads": 58721,
+   "ready_ahead": 0.8105,
+   "attached": 0.5178
+  },
+  {
+   "calls_into_session": "<500",
+   "reads": 168140,
+   "ready_ahead": 0.7931,
+   "attached": 0.531
+  },
+  {
+   "calls_into_session": "<2000",
+   "reads": 63,
+   "ready_ahead": 0.3968,
+   "attached": 0.3492
+  }
+ ],
+ "client_call_ms": {
+  "50": 6.416,
+  "90": 146.568,
+  "99": 557.599
+ },
+ "server_ms_median_of_shards": {
+  "call": {
+   "50": 0.117,
+   "90": 0.382,
+   "99": 1.576
+  },
+  "predict": {
+   "50": 5.374,
+   "90": 20.741,
+   "99": 136.5
+  },
+  "queue_lag": {
+   "50": 0.148,
+   "90": 47.017,
+   "99": 328.526
+  }
+ },
+ "server_counts": {
+  "sessions": 970,
+  "predictions": 428872,
+  "attached": 172377,
+  "prefetch_started": 450707,
+  "prefetch_done": 450563,
+  "prefetch_used": 164206,
+  "calls": 312350,
+  "served_cache": 193468,
+  "attached_hit": 128085,
+  "served_exec": 118137,
+  "writes": 52530,
+  "served_memo": 604,
+  "coalesced": 3715,
+  "predictions_stale": 473,
+  "served_inflight": 141,
+  "prefetch_skipped": 144
+ },
+ "rss_mb_per_shard_max": 882,
+ "planned_calls": 312350
+}

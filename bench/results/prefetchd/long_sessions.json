@@ -1,0 +1,108 @@
+{
+ "config": {
+  "tau": "/home/lain_iwakura/Documents/tau-bench",
+  "calls": 300000,
+  "chain": 250,
+  "clients": 10,
+  "threads": 12,
+  "think": 0.2,
+  "shards": 8,
+  "port": 9600,
+  "blind": false,
+  "domains": "retail,airline,telecom",
+  "models": "bench/results/live_long",
+  "out": "bench/results/prefetchd/long_sessions.json"
+ },
+ "env": {},
+ "tool_calls": 312350,
+ "wall_s": 1741.1,
+ "calls_per_s": 179.4,
+ "workflow_errors": 0,
+ "error_examples": [],
+ "served": {
+  "cache": 185609,
+  "exec": 125462,
+  "inflight": 480,
+  "memo": 799
+ },
+ "mismatches": {},
+ "reads": 242360,
+ "ready_ahead": 0.7678,
+ "attached": 0.5047,
+ "attach_precision": 0.7363,
+ "prefetch_precision": 0.3645,
+ "by_position": [
+  {
+   "calls_into_session": "<20",
+   "reads": 3978,
+   "ready_ahead": 0.7826,
+   "attached": 0.5146
+  },
+  {
+   "calls_into_session": "<100",
+   "reads": 15521,
+   "ready_ahead": 0.7751,
+   "attached": 0.4976
+  },
+  {
+   "calls_into_session": "<500",
+   "reads": 77639,
+   "ready_ahead": 0.7706,
+   "attached": 0.4888
+  },
+  {
+   "calls_into_session": "<2000",
+   "reads": 144235,
+   "ready_ahead": 0.7654,
+   "attached": 0.5131
+  },
+  {
+   "calls_into_session": ">=2000",
+   "reads": 987,
+   "ready_ahead": 0.7264,
+   "attached": 0.6059
+  }
+ ],
+ "client_call_ms": {
+  "50": 10.53,
+  "90": 214.074,
+  "99": 689.333
+ },
+ "server_ms_median_of_shards": {
+  "call": {
+   "50": 0.105,
+   "90": 0.347,
+   "99": 1.376
+  },
+  "predict": {
+   "50": 4.722,
+   "90": 22.449,
+   "99": 179.612
+  },
+  "queue_lag": {
+   "50": 7.319,
+   "90": 171.629,
+   "99": 701.397
+  }
+ },
+ "server_counts": {
+  "sessions": 250,
+  "predictions": 399800,
+  "attached": 166135,
+  "prefetch_started": 434434,
+  "prefetch_done": 434049,
+  "calls": 312350,
+  "served_exec": 125462,
+  "attached_hit": 122331,
+  "prefetch_used": 158207,
+  "served_cache": 185609,
+  "coalesced": 32781,
+  "writes": 52530,
+  "predictions_stale": 1435,
+  "served_inflight": 480,
+  "prefetch_skipped": 385,
+  "served_memo": 799
+ },
+ "rss_mb_per_shard_max": 918,
+ "planned_calls": 312350
+}

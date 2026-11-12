@@ -32,6 +32,7 @@ import re
 import sys
 import zlib
 from collections import defaultdict
+from functools import lru_cache
 
 root = sys.argv[1]
 out_path = sys.argv[2] if len(sys.argv) > 2 else None
@@ -89,6 +90,7 @@ READS = {
 }
 
 
+@lru_cache(maxsize=1 << 18)
 def idlike(k):
     return len(k) >= 6 and any(c.isdigit() for c in k)
 
@@ -126,6 +128,7 @@ def mentioned(text, labels):
 CLS = [(str.isdigit, r"\d"), (str.isupper, "[A-Z]"), (str.islower, "[a-z]")]
 
 
+@lru_cache(maxsize=1 << 18)  # pure; the same ids and values recur in every prediction of a session
 def shape(v, level):
     """level 0: exact run lengths; 1: runs become +; 2: alphanumerics collapse to one class."""
     out, prev, n = [], None, 0
