@@ -1,0 +1,100 @@
+{
+ "config": {
+  "tau": "/home/lain_iwakura/Documents/tau-bench",
+  "calls": 1000000,
+  "chain": 50,
+  "clients": 10,
+  "threads": 12,
+  "think": 0.2,
+  "shards": 8,
+  "port": 9500,
+  "blind": false,
+  "domains": "retail,airline,telecom",
+  "models": "/home/lain_iwakura/Documents/agent-branch-predictor/bench/results/live",
+  "out": "bench/results/prefetchd/run_1m.json"
+ },
+ "env": {},
+ "tool_calls": 1030755,
+ "wall_s": 4679.9,
+ "calls_per_s": 220.3,
+ "workflow_errors": 0,
+ "error_examples": [],
+ "served": {
+  "exec": 457540,
+  "cache": 571218,
+  "inflight": 1997
+ },
+ "mismatches": {},
+ "reads": 799788,
+ "ready_ahead": 0.7167,
+ "attached": 0.4086,
+ "attach_precision": 0.7699,
+ "prefetch_precision": 0.4602,
+ "by_position": [
+  {
+   "calls_into_session": "<20",
+   "reads": 51015,
+   "ready_ahead": 0.7299,
+   "attached": 0.4119
+  },
+  {
+   "calls_into_session": "<100",
+   "reads": 193700,
+   "ready_ahead": 0.7264,
+   "attached": 0.398
+  },
+  {
+   "calls_into_session": "<500",
+   "reads": 554811,
+   "ready_ahead": 0.7123,
+   "attached": 0.4121
+  },
+  {
+   "calls_into_session": "<2000",
+   "reads": 262,
+   "ready_ahead": 0.3473,
+   "attached": 0.126
+  }
+ ],
+ "client_call_ms": {
+  "50": 21.35,
+  "90": 288.039,
+  "99": 854.327
+ },
+ "server_ms_median_of_shards": {
+  "call": {
+   "50": 0.133,
+   "90": 0.421,
+   "99": 1.781
+  },
+  "predict": {
+   "50": 8.827,
+   "90": 43.538,
+   "99": 308.303
+  },
+  "queue_lag": {
+   "50": 41.245,
+   "90": 427.976,
+   "99": 1382.178
+  }
+ },
+ "server_counts": {
+  "sessions": 3201,
+  "predictions": 1187870,
+  "attached": 424503,
+  "prefetch_started": 1075288,
+  "prefetch_done": 1074272,
+  "calls": 1030755,
+  "served_exec": 457540,
+  "attached_hit": 326812,
+  "prefetch_used": 494384,
+  "served_cache": 571218,
+  "writes": 173349,
+  "coalesced": 239139,
+  "prefetch_skipped": 1016,
+  "predictions_stale": 11196,
+  "served_inflight": 1997
+ },
+ "rss_mb_per_shard_max": 1240,
+ "planned_calls": 1030755
+}

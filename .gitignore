@@ -13,3 +13,4 @@ __pycache__/
 bench/results/run_*/
 bench/results/old_models/
 bench/results/*fold*.txt
+bench/results/live*/*.txt
