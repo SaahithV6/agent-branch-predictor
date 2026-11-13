@@ -1,0 +1,200 @@
+{
+ "retail": {
+  "before": {
+   "precision": 0.8817,
+   "coverage": 0.6745,
+   "calls_saved": 0.5032,
+   "wasted_per_chat": 0.5,
+   "tools": {
+    "find_user_id_by_email": {
+     "reads": 671,
+     "covered": 671
+    },
+    "find_user_id_by_name_zip": {
+     "reads": 2468,
+     "covered": 0
+    },
+    "get_item_details": {
+     "reads": 36,
+     "covered": 0
+    },
+    "get_order_details": {
+     "reads": 8571,
+     "covered": 8345
+    },
+    "get_product_details": {
+     "reads": 2982,
+     "covered": 136
+    },
+    "get_user_details": {
+     "reads": 2996,
+     "covered": 2996
+    },
+    "list_all_product_types": {
+     "reads": 287,
+     "covered": 0
+    }
+   }
+  },
+  "context": {
+   "precision": 0.888,
+   "coverage": 0.7569,
+   "calls_saved": 0.5647,
+   "wasted_per_chat": 0.53,
+   "tools": {
+    "find_user_id_by_email": {
+     "reads": 671,
+     "covered": 671
+    },
+    "find_user_id_by_name_zip": {
+     "reads": 2468,
+     "covered": 1672
+    },
+    "get_item_details": {
+     "reads": 36,
+     "covered": 0
+    },
+    "get_order_details": {
+     "reads": 8571,
+     "covered": 8270
+    },
+    "get_product_details": {
+     "reads": 2982,
+     "covered": 23
+    },
+    "get_user_details": {
+     "reads": 2996,
+     "covered": 2996
+    },
+    "list_all_product_types": {
+     "reads": 287,
+     "covered": 0
+    }
+   }
+  }
+ },
+ "airline": {
+  "before": {
+   "precision": 0.8992,
+   "coverage": 0.2846,
+   "calls_saved": 0.2088,
+   "wasted_per_chat": 0.17,
+   "tools": {
+    "get_flight_status": {
+     "reads": 444,
+     "covered": 0
+    },
+    "get_reservation_details": {
+     "reads": 3631,
+     "covered": 931
+    },
+    "get_user_details": {
+     "reads": 1210,
+     "covered": 1204
+    },
+    "list_all_airports": {
+     "reads": 36,
+     "covered": 0
+    },
+    "search_direct_flight": {
+     "reads": 1686,
+     "covered": 0
+    },
+    "search_onestop_flight": {
+     "reads": 495,
+     "covered": 0
+    }
+   }
+  },
+  "context": {
+   "precision": 0.903,
+   "coverage": 0.291,
+   "calls_saved": 0.2135,
+   "wasted_per_chat": 0.16,
+   "tools": {
+    "get_flight_status": {
+     "reads": 444,
+     "covered": 0
+    },
+    "get_reservation_details": {
+     "reads": 3631,
+     "covered": 979
+    },
+    "get_user_details": {
+     "reads": 1210,
+     "covered": 1204
+    },
+    "list_all_airports": {
+     "reads": 36,
+     "covered": 0
+    },
+    "search_direct_flight": {
+     "reads": 1686,
+     "covered": 0
+    },
+    "search_onestop_flight": {
+     "reads": 495,
+     "covered": 0
+    }
+   }
+  }
+ },
+ "telecom": {
+  "before": {
+   "precision": 0.9639,
+   "coverage": 0.34,
+   "calls_saved": 0.2598,
+   "wasted_per_chat": 0.06,
+   "tools": {
+    "get_bills_for_customer": {
+     "reads": 344,
+     "covered": 42
+    },
+    "get_customer_by_id": {
+     "reads": 4,
+     "covered": 0
+    },
+    "get_customer_by_phone": {
+     "reads": 1828,
+     "covered": 1828
+    },
+    "get_data_usage": {
+     "reads": 665,
+     "covered": 0
+    },
+    "get_details_by_id": {
+     "reads": 5683,
+     "covered": 1028
+    }
+   }
+  },
+  "context": {
+   "precision": 0.9653,
+   "coverage": 0.3372,
+   "calls_saved": 0.2576,
+   "wasted_per_chat": 0.05,
+   "tools": {
+    "get_bills_for_customer": {
+     "reads": 344,
+     "covered": 51
+    },
+    "get_customer_by_id": {
+     "reads": 4,
+     "covered": 0
+    },
+    "get_customer_by_phone": {
+     "reads": 1828,
+     "covered": 1828
+    },
+    "get_data_usage": {
+     "reads": 665,
+     "covered": 30
+    },
+    "get_details_by_id": {
+     "reads": 5683,
+     "covered": 965
+    }
+   }
+  }
+ }
+}

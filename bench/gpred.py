@@ -15,6 +15,7 @@ With timestamps (tau2), each covered call also gets its lead time: how many seco
 agent asked for it the prediction could have started.
 """
 
+import bisect
 import json
 import os
 import re
@@ -39,9 +40,14 @@ ROUNDS = int(os.environ.get("ROUNDS", "300"))
 NEG = float(os.environ.get("NEG", "0.2"))
 CACHE_TARGET = float(os.environ.get("CACHE_TARGET", "0.5"))
 # Structural switches searched by improve.py; defaults reproduce the shipped model.
-CONFIG = {"words": True, "cats": True, "siblings": False, "ambiguity": False, "leaves": 63}
+CONFIG = {"words": True, "cats": True, "siblings": False, "ambiguity": False, "context": True, "leaves": 63}
+SAVED_BEFORE_CONFIG = {**CONFIG, "context": False}  # models saved before the featurizer recorded its own
 OPTIONAL = {"siblings": ["listed beside it, already opened", "share of listed records already opened"],
-            "ambiguity": ["candidates for this argument", "source places offering candidates"]}
+            "ambiguity": ["candidates for this argument", "source places offering candidates"],
+            # where a word sits in the customer's sentence: "my name is Ivan Hernandez", "from JFK to SEA"
+            "context": ["word before it (per argument)", "word before has its shape", "word after has its shape",
+                        "same-shape words before it"]}
+CONTEXT_CAT = "word before it (per argument)"  # categorical, like the first three features
 TOKEN = re.compile(r"[#\w][\w@.+:/-]{2,}")
 CAT = [0, 1, 2]
 GENERIC = ["field name = argument name", "field/argument name overlap", "field/tool name overlap", "source/tool name overlap",
@@ -87,7 +93,7 @@ def scalar_args(args):
 
 class Featurizer:
     def __init__(self, traces, generic=False):
-        self.generic = generic
+        self.generic, self.config = generic, dict(CONFIG)
         sigs, self.shapes, words = {}, {}, Counter()
         for t in traces:
             for s in t["steps"]:
@@ -98,7 +104,7 @@ class Featurizer:
             words.update(set(re.findall(r"[a-z]{4,}", t["steps"][-1]["text"].lower())))
         self.args = {n: c.most_common(1)[0][0] for n, c in sigs.items()}
         self.tools = sorted(self.args)
-        self.vocab = [] if generic or not CONFIG["words"] else [w for w, _ in words.most_common(NWORDS)]
+        self.vocab = [] if generic or not self.config["words"] else [w for w, _ in words.most_common(NWORDS)]
         self.learn_lexicon(traces)
 
     def learn_lexicon(self, traces):
@@ -134,11 +140,11 @@ class Featurizer:
         """Feature names, in row order, for explanations."""
         return (["tool", "source tool", "source field"] + GENERIC + ["results so far", "calls to this tool", "number of arguments"]
                 + ([] if self.generic else [f"calls to {x}" for x in self.tools] + [f'customer said "{w}"' for w in self.vocab])
-                + [n for k, ns in OPTIONAL.items() if CONFIG[k] for n in ns])
+                + [n for k, ns in OPTIONAL.items() if self.config[k] for n in ns])
 
     def meta(self):
         return {"generic": self.generic, "args": self.args, "shapes": {k: dict(v) for k, v in self.shapes.items()}, "vocab": self.vocab,
-                "lexicon": self.lexicon, "year": self.year}
+                "lexicon": self.lexicon, "year": self.year, "config": self.config}
 
     @classmethod
     def load(cls, meta):
@@ -147,6 +153,7 @@ class Featurizer:
         fz.tools, fz.vocab = sorted(fz.args), meta["vocab"]
         fz.shapes = {k: Counter(v) for k, v in meta["shapes"].items()}
         fz.lexicon, fz.year = meta.get("lexicon", {}), meta.get("year")
+        fz.config = meta.get("config", SAVED_BEFORE_CONFIG)
         return fz
 
     def rows(self, text, results, called):
@@ -155,7 +162,20 @@ class Featurizer:
         leaves = [(j, name, pat, v, lab) for j, (name, res) in enumerate(results) for pat, v, lab in T.walk(res)]
         where = Counter(x[3] for x in leaves)
         sib = Counter((x[0], x[2]) for x in leaves)
-        src = [x + (0, "") for x in leaves] + [(-1, "TEXT", ("text",), m.group().rstrip(".,"), (), 0, "") for m in TOKEN.finditer(text)]
+        said = [(m, m.group().rstrip(".,")) for m in TOKEN.finditer(text)]
+        src = [x + (0, "") for x in leaves] + [(-1, "TEXT", ("text",), v, (), 0, "") for _, v in said]
+        ctx = {}  # src index -> (word before, previous word same shape, next word same shape, same-shape words before)
+        if self.config["context"]:
+            shp, seen = [T.shape(v, 1) for _, v in said], Counter()
+            words = [w.span() for w in re.finditer(r"[a-z']+", low)]
+            starts = [a for a, _ in words]
+            for q, (m, v) in enumerate(said):
+                # the last word in the 24 characters before this token, clipped to them
+                b, s0 = bisect.bisect_left(starts, m.start()) - 1, m.start()
+                prev = low[max(words[b][0], s0 - 24):min(words[b][1], s0)] if b >= 0 and words[b][1] > s0 - 24 else ""
+                adj = lambda r: 0 <= r < len(said) and shp[r] == shp[q] and not text[min(m.end(), said[r][0].end()):max(m.start(), said[r][0].start())].strip()  # noqa: E731
+                ctx[len(leaves) + q] = (prev, int(adj(q - 1)), int(adj(q + 1)), seen[shp[q]])
+                seen[shp[q]] += 1
         src += [(-3, "TEXT", ("date",), d, (), 0, "") for d in dates(low, self.year)]
         src += [(-2, "TEXT", ("alias",), code, (), 1.0, name) for name, code in self.lexicon.items()
                 if re.search(r"\b" + re.escape(name) + r"\b", low)]
@@ -171,9 +191,9 @@ class Featurizer:
             if not args:
                 if key(tool, {}) not in called:
                     out.append((tool, "", "", [0 if self.generic else h(tool), 0, 0] + [0] * 17 + base
-                                + [0] * sum(len(ns) for k, ns in OPTIONAL.items() if CONFIG[k]), "conversation stage"))
+                                + [0] * sum(len(ns) for k, ns in OPTIONAL.items() if self.config[k]), "conversation stage"))
                 continue
-            if CONFIG["siblings"] or CONFIG["ambiguity"]:
+            if self.config["siblings"] or self.config["ambiguity"]:
                 opened, slot_n, slot_src = Counter(), Counter(), Counter()
                 for a in args:
                     ok_src = [(src[i][0], src[i][2], src[i][3]) for i in self.matching(tool, a, by_shape)]
@@ -192,13 +212,16 @@ class Featurizer:
                         continue
                     steps = [p for p in pat if p not in ("*", "{k}")]
                     ptoks = toks(" ".join(steps))
-                    cats = [0, 0, 0] if self.generic or not CONFIG["cats"] else [h(tool), h(stool), h(tool, a, stool, pat)]
+                    cats = [0, 0, 0] if self.generic or not self.config["cats"] else [h(tool), h(stool), h(tool, a, stool, pat)]
                     opt = []
-                    if CONFIG["siblings"]:  # the agent opened k of the n records listed together with this one
+                    if self.config["siblings"]:  # the agent opened k of the n records listed together with this one
                         done_ = opened.get((tool, a, j, pat), 0) if j >= 0 else 0
                         opt += [done_, done_ / max(sib[(j, pat)], 1) if j >= 0 else 0]
-                    if CONFIG["ambiguity"]:
+                    if self.config["ambiguity"]:
                         opt += [slot_n[(tool, a)], slot_src[(tool, a)]]
+                    if self.config["context"]:
+                        prev, ps, ns, rank = ctx.get(i, (None, 0, 0, -1))
+                        opt += [h(tool, a, prev) if prev is not None else 0, ps, ns, rank]
                     out.append((tool, a, v, cats + [
                         int(bool(steps) and steps[-1] == a), len(atoks & ptoks) / max(len(atoks), 1), len(ttoks & ptoks) / max(len(ttoks), 1),
                         len(ttoks & toks(stool)) / max(len(ttoks), 1), int(bool(pat) and pat[-1] == "{k}"), len(pat),
@@ -263,7 +286,8 @@ def dataset(fz, traces):
 def fit(traces, generic=False):
     fz = Featurizer(traces, generic)
     X, y, w = dataset(fz, traces)
-    return fz, lgb.train({**PARAMS, "num_leaves": CONFIG["leaves"]}, lgb.Dataset(X, y, weight=w, categorical_feature=CAT), ROUNDS)
+    cat = CAT + [i for i, n in enumerate(fz.names()) if n == CONTEXT_CAT]
+    return fz, lgb.train({**PARAMS, "num_leaves": fz.config["leaves"]}, lgb.Dataset(X, y, weight=w, categorical_feature=cat), ROUNDS)
 
 
 def trace(fz, model, t):
