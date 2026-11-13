@@ -1,0 +1,16 @@
+K = 0 pooled None
+   find_user_id_by_email {'gate': 0.05, 'pos': 251, 'pos_med': 0.983, 'pos>=.9': 0.96, 'neg>=.9': 1}
+   find_user_id_by_name_zip {'gate': None, 'pos': 102, 'pos_med': 0.661, 'pos>=.9': 0.088, 'neg>=.9': 53}
+   get_item_details {'gate': None, 'pos': 11, 'pos_med': 0.001, 'pos>=.9': 0.0, 'neg>=.9': 0}
+   get_order_details {'gate': 0.05, 'pos': 3705, 'pos_med': 0.996, 'pos>=.9': 0.989, 'neg>=.9': 677}
+   get_product_details {'gate': None, 'pos': 1158, 'pos_med': 0.988, 'pos>=.9': 0.846, 'neg>=.9': 556}
+   get_user_details {'gate': 0.05, 'pos': 1305, 'pos_med': 0.994, 'pos>=.9': 0.987, 'neg>=.9': 130}
+   list_all_product_types {'gate': None, 'pos': 167, 'pos_med': 0.279, 'pos>=.9': 0.018, 'neg>=.9': 6}
+K = 30 pooled None
+   find_user_id_by_email {'gate': None, 'pos': 251, 'pos_med': 1.0, 'pos>=.9': 0.96, 'neg>=.9': 5}
+   find_user_id_by_name_zip {'gate': None, 'pos': 96, 'pos_med': 0.056, 'pos>=.9': 0.177, 'neg>=.9': 271}
+   get_item_details {'gate': None, 'pos': 11, 'pos_med': 0.0, 'pos>=.9': 0.0, 'neg>=.9': 613}
+   get_order_details {'gate': 0.05, 'pos': 3705, 'pos_med': 1.0, 'pos>=.9': 0.753, 'neg>=.9': 600}
+   get_product_details {'gate': None, 'pos': 1158, 'pos_med': 1.0, 'pos>=.9': 0.88, 'neg>=.9': 5285}
+   get_user_details {'gate': 0.05, 'pos': 1305, 'pos_med': 1.0, 'pos>=.9': 0.866, 'neg>=.9': 136}
+   list_all_product_types {'gate': None, 'pos': 167, 'pos_med': 0.06, 'pos>=.9': 0.263, 'neg>=.9': 507}

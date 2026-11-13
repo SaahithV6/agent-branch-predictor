@@ -6,8 +6,15 @@ The Claude CLI starts a fresh server for every agent turn, so everything that mu
 lives in the state dir:
   text.txt      what the customer has said so far (written by tau_chat.py)
   state.json    the read results so far and the call keys already predicted
-  cache/        one file per prefetched read: <crc>.json when done, <crc>.pending while running
+  cache/        one file per prefetched read: <crc>.json when done, <crc>.pending (holding the owner's
+                pid) while running
+  gen           write generation: bumped by every write; a prefetch that started in an older
+                generation discards its result, so a read that raced a write is never served
   trace.jsonl   every call and prediction with timestamps (appended by server and runner)
+
+The runner and the per-turn server are separate processes, so state.json is updated under a file
+lock, and a .pending file whose owner process is gone (the CLI kills the server between turns) is
+ignored instead of waited on. At most MAX_PREFETCH guesses run per prediction, best first.
 
 With a predictor (gpred.Predictor), every successful read triggers a prediction from the results so
 far plus the customer's words (tau_chat.py also predicts on every new customer message). Strict-gate
@@ -17,6 +24,7 @@ guesses only go to the cache, so a wrong one costs a wasted read but never puts 
 front of the model. A call found in the cache returns at once, or waits only for what is running.
 """
 
+import fcntl
 import json
 import os
 import sys
@@ -40,6 +48,7 @@ def trim(name, result):
     return prune.project(name, result, KEEP) or result
 
 ATTACH_MIN = float(os.environ.get("ATTACH_MIN", "0.9"))  # attach only near-certain guesses; the rest wait in the cache
+MAX_PREFETCH = int(os.environ.get("MAX_PREFETCH", "8"))  # per prediction: a big catalog can fire dozens of guesses
 ATTACH_MAX = int(os.environ.get("ATTACH_MAX", "3"))  # per lookup: a pile of records confuses the agent (pending vs delivered mix-ups)
 
 NOTE = ("\n\n[prefetched lookups: read-only results fetched ahead of time, so you do not need to call these tools again. "
@@ -58,10 +67,49 @@ def load_state(sd):
         return {"results": [], "seen": []}
 
 
-def save_state(sd, st):
-    tmp = os.path.join(sd, f"state.{os.getpid()}.{threading.get_ident()}.tmp")
-    json.dump(st, open(tmp, "w"))
-    os.replace(tmp, os.path.join(sd, "state.json"))
+def update_state(sd, fn):
+    """Read-modify-write state.json under an exclusive lock (runner and server both write it)."""
+    with open(os.path.join(sd, "state.lock"), "a") as lk:
+        fcntl.flock(lk, fcntl.LOCK_EX)
+        st = load_state(sd)
+        fn(st)
+        tmp = os.path.join(sd, f"state.{os.getpid()}.{threading.get_ident()}.tmp")
+        json.dump(st, open(tmp, "w"))
+        os.replace(tmp, os.path.join(sd, "state.json"))
+        return st
+
+
+def gen(sd):
+    try:
+        return int(open(os.path.join(sd, "gen")).read() or 0)
+    except (OSError, ValueError):
+        return 0
+
+
+def alive(pid):
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+def running(sd, k):
+    """A prefetch of k is in flight in a live process (a dead owner's .pending is removed)."""
+    p = cpath(sd, k, "pending")
+    try:
+        pid = int(open(p).read().split()[0])
+    except (OSError, ValueError, IndexError):
+        return False
+    if alive(pid):
+        return True
+    try:
+        os.remove(p)
+    except OSError:
+        pass
+    return False
 
 
 def cpath(sd, k, ext):
@@ -72,15 +120,33 @@ def cpath(sd, k, ext):
 def prefetch(sd, name, args, why, trigger, box=None):
     """Run one predicted read and drop it in the cache (thread-safe, process-safe)."""
     k = key(name, args)
-    open(cpath(sd, k, "pending"), "w").write(str(time.time()))
-    out, t0, ms = execute(name, args)
+    g0 = gen(sd)
+    open(cpath(sd, k, "pending"), "w").write(f"{os.getpid()} {time.time()}")
+    try:
+        out, t0, ms = execute(name, args)
+    except Exception as e:  # a tool crash must not leave .pending behind for callers to wait on
+        log(sd, {"name": "prefetch_error", "args": args, "tool": name, "t": round(time.time(), 3), "error": repr(e)[:300], "trigger": trigger})
+        _rm(cpath(sd, k, "pending"))
+        return None
     tmp = cpath(sd, k, f"{os.getpid()}.{threading.get_ident()}.tmp")
-    json.dump({"key": k, "result": out}, open(tmp, "w"))
+    json.dump({"key": k, "result": out, "gen": g0}, open(tmp, "w"))
     os.replace(tmp, cpath(sd, k, "json"))
+    _rm(cpath(sd, k, "pending"))
+    if gen(sd) != g0:  # a write happened while this read ran: its result may be stale
+        _rm(cpath(sd, k, "json"))
+        log(sd, {"name": name, "args": args, "prefetched": True, "discarded": "write during prefetch", "t": round(t0, 3), "ms": ms, "trigger": trigger})
+        return None
     log(sd, {"name": name, "args": args, "prefetched": True, "t": round(t0, 3), "ms": ms, "trigger": trigger, **why})
     if box is not None:
         box[k] = out
     return out
+
+
+def _rm(p):
+    try:
+        os.remove(p)
+    except OSError:
+        pass
 
 
 def start(sd, pred, text, trigger):
@@ -93,8 +159,8 @@ def start(sd, pred, text, trigger):
         log(sd, {"name": "predictor_error", "t": round(tp, 3), "error": repr(e)[:300], "trigger": trigger})
         return []
     pred_ms = round((time.time() - tp) * 1000, 2)
-    st["seen"] = sorted(set(st["seen"]) | {g["key"] for g in guesses})
-    save_state(sd, st)
+    guesses = [g for g in guesses if not (os.path.exists(cpath(sd, g["key"], "json")) or running(sd, g["key"]))][:MAX_PREFETCH]
+    update_state(sd, lambda st: st.__setitem__("seen", sorted(set(st["seen"]) | {g["key"] for g in guesses})))
     out, box = [], {}
     for g in guesses:
         n = g["key"].split("{")[0]
@@ -114,11 +180,16 @@ def start(sd, pred, text, trigger):
 
 
 def from_cache(sd, k, timeout=10.0):
+    """The cached result, waiting only on a prefetch that is still running in a live process."""
     t0 = time.time()
     while True:
-        if os.path.exists(cpath(sd, k, "json")):
-            return json.load(open(cpath(sd, k, "json")))["result"]
-        if not os.path.exists(cpath(sd, k, "pending")) or time.time() - t0 > timeout:
+        try:
+            e = json.load(open(cpath(sd, k, "json")))
+            if e.get("gen", 0) == gen(sd):  # an entry from before the last write is never served
+                return e["result"]
+        except (OSError, ValueError, KeyError):
+            pass
+        if not running(sd, k) or time.time() - t0 > timeout:
             return None
         time.sleep(0.02)
 
@@ -139,16 +210,19 @@ def call(sd, pred, name, args):
     else:
         out, t0, ms = execute(name, args)
         log(sd, {"name": name, "args": args, "t": round(t0, 3), "ms": ms})
-    if name not in READ:  # a write may change what reads return
+    if name not in READ:  # a write may change what reads return: bump the generation, then drop the cache
+        with open(os.path.join(sd, "state.lock"), "a") as lk:
+            fcntl.flock(lk, fcntl.LOCK_EX)
+            open(os.path.join(sd, "gen"), "w").write(str(gen(sd) + 1))
         for f in os.listdir(os.path.join(sd, "cache")) if os.path.isdir(os.path.join(sd, "cache")) else []:
-            os.remove(os.path.join(sd, "cache", f))
+            _rm(os.path.join(sd, "cache", f))
     text = out if isinstance(out, str) else json.dumps(out)
     if not (pred and name in READ and not text.startswith("Error")):
         return text
-    st = load_state(sd)
-    st["results"].append([name, out])
-    st["seen"] = sorted(set(st["seen"]) | {k})
-    save_state(sd, st)
+    def add(st):
+        st["results"].append([name, out])
+        st["seen"] = sorted(set(st["seen"]) | {k})
+    update_state(sd, add)
     extra, deadline = [], time.time() + WAIT
     for _ in range(3):  # chain: user -> orders -> products
         strict = [(n, a, t, box) for n, a, t, inj, box in start(sd, pred, text_of(sd), name) if inj][:ATTACH_MAX - len(extra)]
@@ -158,9 +232,7 @@ def call(sd, pred, name, args):
             r = box.get(key(n, a))
             if r is None or (isinstance(r, str) and r.startswith("Error")):
                 continue
-            st = load_state(sd)
-            st["results"].append([n, r])
-            save_state(sd, st)
+            update_state(sd, lambda st: st["results"].append([n, r]))
             extra.append(f"{n}({json.dumps(a, separators=(',', ':'))}) -> {json.dumps(trim(n, r), separators=(',', ':'))}")
             got += 1
         if not got or len(extra) >= ATTACH_MAX:

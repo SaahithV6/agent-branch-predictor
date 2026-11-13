@@ -1,0 +1,24 @@
+[
+ {
+  "domain": "retail",
+  "decoys": 0,
+  "tools": 7,
+  "precision": 0.884,
+  "coverage": 0.631,
+  "calls_saved": 0.471,
+  "decoy_fires_per_chat": 0.0,
+  "predict_ms_median": 7.46,
+  "predict_ms_p95": 22.52,
+  "train_s": 273.9,
+  "pooled_gate": [
+   null,
+   null,
+   null
+  ],
+  "gated_tools": [
+   3,
+   3,
+   3
+  ]
+ }
+]

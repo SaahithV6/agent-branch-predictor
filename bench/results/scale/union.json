@@ -1,0 +1,74 @@
+[
+ {
+  "arm": "separate",
+  "domain": "retail",
+  "tools_in_catalog": 7,
+  "precision": 0.881678259582655,
+  "coverage": 0.6744767086780301,
+  "calls_saved": 0.5032103061182222,
+  "predicted": 13514,
+  "reads": 18011,
+  "wasted_per_chat": 0.5,
+  "lead_s_median": 3.49
+ },
+ {
+  "arm": "separate",
+  "domain": "airline",
+  "tools_in_catalog": 6,
+  "precision": 0.8987908643081057,
+  "coverage": 0.2763263129832045,
+  "calls_saved": 0.202778049496234,
+  "predicted": 2233,
+  "reads": 7502,
+  "wasted_per_chat": 0.16,
+  "lead_s_median": 3.0
+ },
+ {
+  "arm": "separate",
+  "domain": "telecom",
+  "tools_in_catalog": 5,
+  "precision": 0.9658417567096549,
+  "coverage": 0.339746597841389,
+  "calls_saved": 0.25959125134456795,
+  "predicted": 2869,
+  "reads": 8524,
+  "wasted_per_chat": 0.05,
+  "lead_s_median": 2.97
+ },
+ {
+  "arm": "union",
+  "domain": "retail",
+  "tools_in_catalog": 17,
+  "precision": 0.8804720213170918,
+  "coverage": 0.6550996613180834,
+  "calls_saved": 0.4887535727600348,
+  "predicted": 13135,
+  "reads": 18011,
+  "wasted_per_chat": 0.49,
+  "lead_s_median": 3.55
+ },
+ {
+  "arm": "union",
+  "domain": "airline",
+  "tools_in_catalog": 17,
+  "precision": 0.8839127872716559,
+  "coverage": 0.41189016262330047,
+  "calls_saved": 0.30225961068179596,
+  "predicted": 3394,
+  "reads": 7502,
+  "wasted_per_chat": 0.29,
+  "lead_s_median": 3.29
+ },
+ {
+  "arm": "union",
+  "domain": "telecom",
+  "tools_in_catalog": 17,
+  "precision": 0.9465729349736379,
+  "coverage": 0.329892069450962,
+  "calls_saved": 0.25206167084976694,
+  "predicted": 2845,
+  "reads": 8524,
+  "wasted_per_chat": 0.08,
+  "lead_s_median": 2.97
+ }
+]
