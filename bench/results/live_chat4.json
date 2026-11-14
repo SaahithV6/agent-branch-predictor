@@ -1,0 +1,13 @@
+{
+ "run": "bench/results/run_chat4 (gitignored transcripts; go.sh + code snapshot there)",
+ "setup": "tau-bench retail test, 115 tasks, multi-turn: Sonnet 4.5 customer, Haiku 4.5 agent, tools 0.8 s, PREFETCH_WAIT 4, turbo = attach >= 0.9, <= 3 records, pruned; models per customer fold (same folds as run_chat3)",
+ "date": "2026-11-13",
+ "vs_fresh_baseline": {
+  "turbo_old_models": {"turns": "-17.5% (CI -20.8..-14.1)", "agent_tool_calls": "-31.3% (CI -35.2..-27.5)", "input_tokens": "-11.5% (CI -16.0..-7.4)",
+                       "seconds": "+0.6% (CI -3.5..+4.7)", "correct": "81 vs 89", "lost_won": [16, 8], "accuracy_lower_bound_pts": -13.9},
+  "turbo_context_models": {"turns": "-16.8% (CI -19.9..-13.5)", "agent_tool_calls": "-30.7% (CI -34.4..-26.8)", "input_tokens": "-10.6% (CI -14.8..-6.2)",
+                           "seconds": "+2.4% (CI -2.0..+6.6)", "correct": "79 vs 89", "lost_won": [19, 9], "accuracy_lower_bound_pts": -16.2}
+ },
+ "name_zip": "context models prefetched find_user_id_by_name_zip 66 times (45 attached); the agent still called it 96 times (policy: authenticate via the tool), 60 of them served from cache in 0.3 ms instead of 0.8 s; the old models never prefetched it",
+ "verdict": "attaching guesses costs accuracy beyond the noise floor (base-vs-base bound -5.0 in run_chat3); cache-only (safe) mode is the default to ship; the context features add cache hits, not fewer turns, on this policy"
+}

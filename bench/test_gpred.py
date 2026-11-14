@@ -8,6 +8,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gpred as G  # noqa: E402
+import toolindex as X  # noqa: E402
 
 TEXT = "Sure, my name is Ivan Hernandez and I live in San Diego, 92133."
 
@@ -44,6 +45,19 @@ def test_models_saved_before_config_load_without_context():
     old = G.Featurizer.load(meta)
     assert old.config == G.SAVED_BEFORE_CONFIG and not old.config["context"]
     assert len(old.names()) == len(fz(True).names()) - len(G.OPTIONAL["context"])
+
+
+def test_catalog_adds_bounded_rows_and_leaves_real_rows_alone():
+    f = fz(True)
+    before = f.rows(TEXT, [], set())
+    lookalikes = [{"id": f"cat/s{i}/find_customer_{i}", "server": f"s{i}", "name": f"find_customer_{i}", "read": True,
+                   "args": [{"name": "first_name", "type": "string", "required": True}]} for i in range(5000)]
+    f.catalog = X.ToolIndex(lookalikes + [{"id": "cat/x/delete_user", "server": "x", "name": "delete_user", "read": False,
+                                           "args": [{"name": "first_name", "type": "string", "required": True}]}])
+    after = f.rows(TEXT, [], set())
+    assert [r for r in after if r[0] in f.args] == before  # the real tools' rows are untouched
+    extra = [r for r in after if r[0] not in f.args]
+    assert 0 < len(extra) <= G.CATALOG_ROWS and not any("delete_user" in r[0] for r in extra)  # writes are never indexed
 
 
 if __name__ == "__main__":

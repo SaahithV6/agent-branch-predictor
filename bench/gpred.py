@@ -48,6 +48,7 @@ OPTIONAL = {"siblings": ["listed beside it, already opened", "share of listed re
             "context": ["word before it (per argument)", "word before has its shape", "word after has its shape",
                         "same-shape words before it"]}
 CONTEXT_CAT = "word before it (per argument)"  # categorical, like the first three features
+CATALOG_ROWS = int(os.environ.get("CATALOG_ROWS", "128"))  # catalog candidates scored per prediction, at most: cost stays bounded whatever the catalog size
 TOKEN = re.compile(r"[#\w][\w@.+:/-]{2,}")
 CAT = [0, 1, 2]
 GENERIC = ["field name = argument name", "field/argument name overlap", "field/tool name overlap", "source/tool name overlap",
@@ -94,6 +95,7 @@ def scalar_args(args):
 class Featurizer:
     def __init__(self, traces, generic=False):
         self.generic, self.config = generic, dict(CONFIG)
+        self.catalog = None  # a toolindex.ToolIndex attached at run time: tools known only from their schemas
         sigs, self.shapes, words = {}, {}, Counter()
         for t in traces:
             for s in t["steps"]:
@@ -127,6 +129,26 @@ class Featurizer:
                         if is_code(code) and not is_code(name) and re.fullmatch(r"[A-Za-z][A-Za-z .'-]{2,}", name):
                             self.lexicon[name.lower()] = code
         self.year = years.most_common(1)[0][0] if years else None
+
+    def arg_names(self, tool):
+        return self.args[tool] if tool in self.args else self.catalog.args[tool]
+
+    def shortlist(self, src, low):
+        """Catalog slots that could take a value present now: {(tool, arg): [src index]}. Each value is looked up
+        under its class and the names around it: its result field and tool, or the last words before it in the
+        customer's text ("my order number is #W123")."""
+        out, n = {}, 0
+        for i, (j, stool, pat, v, *_rest) in enumerate(src):
+            if j >= 0:
+                near = [p for p in pat if p not in ("*", "{k}")] + [stool]
+            else:
+                at = low.find(v.lower())
+                near = re.findall(r"[a-z]+", low[max(0, at - 40):at])[-3:] if at > 0 else []
+            for slot in self.catalog.lookup(v, near):
+                if slot[0] not in self.args and n < CATALOG_ROWS:
+                    out.setdefault(slot, []).append(i)
+                    n += 1
+        return out
 
     def matching(self, tool, a, by_shape):
         """Indices of sources whose value shape this argument has taken in training, in source order."""
@@ -185,8 +207,9 @@ class Featurizer:
         n, out = len(results), []
         hist = Counter(name for name, _ in results)
         spec = [] if self.generic else [hist[x] for x in self.tools] + [w in low for w in self.vocab]
-        for tool in self.tools:
-            args, ttoks = self.args[tool], toks(tool)
+        extra = self.shortlist(src, low) if self.catalog else {}
+        for tool in self.tools + sorted({t for t, _ in extra}):
+            args, ttoks = self.arg_names(tool), toks(tool)
             base = [n, hist[tool], len(args)] + spec
             if not args:
                 if key(tool, {}) not in called:
@@ -196,7 +219,7 @@ class Featurizer:
             if self.config["siblings"] or self.config["ambiguity"]:
                 opened, slot_n, slot_src = Counter(), Counter(), Counter()
                 for a in args:
-                    ok_src = [(src[i][0], src[i][2], src[i][3]) for i in self.matching(tool, a, by_shape)]
+                    ok_src = [(src[i][0], src[i][2], src[i][3]) for i in extra.get((tool, a)) or self.matching(tool, a, by_shape)]
                     slot_n[(tool, a)] = len({v for *_, v in ok_src})
                     slot_src[(tool, a)] = len({(j, pat) for j, pat, _ in ok_src})
                     for j, pat, v in ok_src:
@@ -205,7 +228,7 @@ class Featurizer:
             for a in args:
                 shp, atoks = self.shapes.get(f"{tool}|{a}", Counter()), toks(a)
                 total = sum(shp.values()) or 1
-                for i in self.matching(tool, a, by_shape):
+                for i in extra.get((tool, a)) or self.matching(tool, a, by_shape):
                     j, stool, pat, v, lab, conf, phrase = src[i]
                     freq = shp[T.shape(v, 1)]
                     if len(args) == 1 and key(tool, {a: v}) in called:
@@ -237,14 +260,14 @@ def calls(fz, rows, scores, called):
     """Combine slot scores into call keys -> score."""
     best, out = {}, {}
     for (tool, a, v, *_), s in zip(rows, scores):
-        if len(fz.args[tool]) <= 1:
+        if len(fz.arg_names(tool)) <= 1:
             k = key(tool, {a: v} if a else {})
             if k not in called:
                 out[k] = max(out.get(k, 0.0), s)
         elif s > best.get((tool, a), ("", -1))[1]:
             best[(tool, a)] = (v, s)
-    for tool in fz.tools:
-        args = fz.args[tool]
+    for tool in fz.tools + sorted({t for t, _ in best if t not in fz.args}):
+        args = fz.arg_names(tool)
         if len(args) > 1 and all((tool, a) in best for a in args):
             k = key(tool, {a: best[(tool, a)][0] for a in args})
             if k not in called:

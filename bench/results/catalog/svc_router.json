@@ -1,0 +1,104 @@
+{
+ "config": {
+  "tau": "/home/lain_iwakura/Documents/tau-bench",
+  "calls": 60000,
+  "chain": 50,
+  "clients": 10,
+  "threads": 12,
+  "think": 0.2,
+  "shards": 16,
+  "port": 9700,
+  "blind": false,
+  "domains": "retail,airline,telecom",
+  "models": "bench/results/live_long_ctx",
+  "out": "bench/results/catalog/svc_router.json",
+  "router": 9690,
+  "foreign_tools": null,
+  "foreign_rate": 0.0
+ },
+ "env": {},
+ "tool_calls": 62470,
+ "wall_s": 345.2,
+ "calls_per_s": 181.0,
+ "workflow_errors": 0,
+ "error_examples": [],
+ "served": {
+  "cache": 40346,
+  "exec": 21954,
+  "memo": 130,
+  "inflight": 40
+ },
+ "foreign": {
+  "calls": 0,
+  "mismatches": 0,
+  "mean_ms": 0.0
+ },
+ "mismatches": {},
+ "reads": 48472,
+ "ready_ahead": 0.8332,
+ "attached": 0.5634,
+ "attach_precision": 0.7348,
+ "prefetch_precision": 0.3687,
+ "by_position": [
+  {
+   "calls_into_session": "<20",
+   "reads": 3089,
+   "ready_ahead": 0.8534,
+   "attached": 0.5856
+  },
+  {
+   "calls_into_session": "<100",
+   "reads": 11727,
+   "ready_ahead": 0.8459,
+   "attached": 0.5514
+  },
+  {
+   "calls_into_session": "<500",
+   "reads": 33656,
+   "ready_ahead": 0.8269,
+   "attached": 0.5655
+  }
+ ],
+ "client_call_ms": {
+  "50": 7.469,
+  "90": 138.799,
+  "99": 591.881
+ },
+ "server_ms_median_of_shards": {
+  "call": {
+   "50": 0.144,
+   "90": 0.366,
+   "99": 1.808
+  },
+  "predict": {
+   "50": 11.927,
+   "90": 34.153,
+   "99": 114.269
+  },
+  "queue_lag": {
+   "50": 0.146,
+   "90": 28.755,
+   "99": 131.75
+  }
+ },
+ "server_counts": {
+  "sessions": 194,
+  "predictions": 85062,
+  "attached": 37165,
+  "prefetch_started": 93414,
+  "prefetch_done": 93374,
+  "prefetch_used": 34431,
+  "calls": 62470,
+  "served_cache": 40346,
+  "attached_hit": 27308,
+  "served_exec": 21954,
+  "writes": 10506,
+  "coalesced": 1455,
+  "predictions_stale": 187,
+  "prefetch_skipped": 40,
+  "served_inflight": 40,
+  "served_memo": 130
+ },
+ "rss_mb_per_shard_max": 781,
+ "planned_calls": 62470
+}

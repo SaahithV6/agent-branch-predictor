@@ -32,6 +32,8 @@ Unseen agent models (retail): Opus 4.5 97% precision / 52% coverage, GPT-4.1 88%
 
 ![Sentence context: coverage by domain and by retail tool](docs/context.png)
 
+**Live, the gain is latency, not turns** (`results/live_chat4.json`, 115 multi-turn retail tasks, same setup as the multi-turn A/B below, fresh baseline and the old models side by side): with attaching on (turbo), both predictor arms cut the agent's own tool calls 31% and turns 17%, input tokens 11%, wall time unchanged. The context models prefetched the name+zip lookup 66 times; the agent still made it itself (the policy has it authenticate the customer through the tool), but 60 of those 96 calls came from the cache in 0.3 ms instead of 0.8 s. Turbo cost accuracy, beyond the noise floor this time: 79 and 81 correct against 89 (one-sided 95% bounds -16 and -14 points, base-vs-base -5). Cache-only mode, which never changes what the agent sees, is the mode to ship.
+
 **Self-improvement** (`bench/improve.py`): the first search kept one structural change (features for how ambiguous each argument is). On untouched test customers telecom went from 36% to 40% of lookups attached at the same 93% precision; retail and airline unchanged.
 
 **Several catalogs, one predictor** (`bench/union.py`, `results/scale/union.json`): retail, airline and telecom read tools in one 17-tool catalog (both retail and airline have a `get_user_details`, with different results) vs one predictor per domain, same customer folds. Retail 88% precision / 66% coverage (separate: 88% / 67%), telecom 95% / 33% (97% / 34%), airline 88% / 41% (90% / 28%): merging catalogs costs about a point of precision, and airline gains coverage from what the other domains teach.
@@ -77,6 +79,42 @@ Told, it beats the 1M run (71.7% ready, 40.9% attached at 77%). Never told, pref
 **Scaling out** (`shards16.json`): prediction is one GIL-bound thread per shard, so shards are the knob. 16 shards instead of 8 on the same 24 cores: ready ahead 79.9%, 243 calls/s, queue lag p50 0.15 ms / p90 47 ms / p99 329 ms (8 shards: 7 / 172 / 701 ms), client call p50 6.4 ms, 882 MB per shard. The remaining tail is harness cost, measured: every ticket builds a fresh tau2 environment inside the shard (airline ~95 ms of JSON parsing and pydantic validation, holding the GIL). An ablation whose shards never rebuild (`bench/ablate_nobuild.py`, results wrong on purpose) cuts queue lag p99 from 174-233 ms to 20 ms and p90 from 27-34 ms to 4 ms (60k calls each, 16 shards: `abl_base.json`, `abl_base2.json`, `abl_nobuild.json`). A deployment over a shared database builds none. Cheaper builds don't help: cloning a validated database by deepcopy or pickle costs 2x a rebuild.
 
 `python3 -I bench/test_prefetchd.py <tau-bench>` checks the invariants on real retail tools: prefetched results equal direct ones, writes invalidate, a write during a prediction drops its guesses, writes are never prefetched, memory stays bounded over 1,500 calls, a crashing predictor does not stop the service.
+
+## A million tools (2026-11-13)
+
+The predictor was built for catalogs of 5-20 tools. `docs/million-tools.md` is the checklist of what changes at a million, with the decision and status of each item. The premise every choice leans on: a session never sees a million tools, it is connected to a few servers; the million exists at the service. Per prediction, work must follow the conversation, never the catalog.
+
+**The catalog** (`bench/catalog.py`, sources fetched by `data/catalogs/fetch.sh`, parsed as data only): 275k distinct real tool definitions from APIs.guru's OpenAPI directory (130k), ToolBench/StableToolBench RapidAPI (47k, GET endpoints only), Google API discovery (31k), Azure REST specs (27.5k), Microsoft Graph v1.0 (20k) and AWS botocore (19.6k). Public catalogs top out there; counting every API version (as gateways serving versions side by side expose them) gives 513,837. The 1M catalog is those plus 486,163 tenant copies (the same API registered under other tenants' server names, as a multi-tenant gateway would), labelled as such.
+
+**Candidates without scanning the catalog** (`bench/toolindex.py`): every catalog argument is indexed under (value class, name token): email, date, uuid, url, integer, id, code or word, from its schema or name, and the tokens of its name. A value in the conversation is looked up with its own class and the names around it (its result field and tool, or the last words before it in the customer's text), best 16 slots per value, at most 128 catalog candidates per prediction. Tools known only from a schema never earn their own gate; they can only clear a pooled gate certified on tools like them.
+
+**Retail with a million tools in the catalog** (`bench/catalog_scale.py`, `results/catalog/scale.json`; held-out customers, gates re-picked with the catalog attached):
+
+| Catalog | Precision | Lookups predicted | Catalog tools guessed | ms per prediction | Index build |
+|---|---|---|---|---|---|
+| none | 87.7% | 76.5% | 0 | 9.3 | |
+| 1k | 87.7% | 76.5% | 0 | 13.7 | 0.0 s |
+| 10k | 87.7% | 76.5% | 0 | 13.6 | 0.1 s |
+| 100k | 87.7% | 76.5% | 0 | 16.5 | 1.2 s |
+| 514k (all real) | 87.7% | 76.5% | 0 | 15.3 | 5.4 s |
+| 1M | 87.7% | 76.5% | 0 | 16.6 | 10.4 s |
+| 1M, trained with it | 87.7% | 76.3% | 0 | 14.8 | |
+
+Accuracy does not move, nothing from the catalog fires, and the cost is a flat ~6 ms once the candidate cap is reached. Training with the million tools as negatives changes nothing either (unlike forced-in lookalikes of the real tools, `results/scale`).
+
+![Catalog scale: accuracy flat, cost flat](docs/catalog_scale.png)
+
+**Partitioning and forwarding** (`bench/router.py`, `bench/test_router.py`): servers used together are grouped (union-find over co-use) and packed onto partitions, each with a shard group sized to its load. Stateful servers (a tau domain's database) are never split; stateless catalog servers bigger than half a partition are cut by tool name. 1M tools on 25,631 servers into 64 partitions: every partition at exactly 1/64 of the load, planned in 0.2 s. A partition's share of the index is small (16 partitions: 31-32k read tools each), and `router.py shard-catalog` writes one file per partition so no shard parses the rest. The router is stateless (the shard is written into the session id, so any number of routers share one port): a session goes to the partition holding most of its servers, a tool owned by another partition is executed there, a dead shard answers 503 `reopen` and new sessions avoid it.
+
+**The service with a million tools** (`results/catalog/svc_*.json`, 60k real tool calls each, 16 shards, back to back; the tau domains are stateful partitions with 8/4/4 shards, the 1M catalog's 16 stateless partitions are hosted round-robin on the same shards, every result checked against a direct call):
+
+| | Calls/s | Ready ahead | Attached (precision) | Client p50 | Predict p50 | Queue lag p99 | Memory per shard | Wrong results |
+|---|---|---|---|---|---|---|---|---|
+| Direct to shards | 184 | 83.8% | 56.8% (73.7%) | 6.8 ms | 8.0 ms | 252 ms | 730 MB | 0 |
+| Through the router | 181 | 83.3% | 56.3% (73.5%) | 7.5 ms | 11.9 ms | 132 ms | 781 MB | 0 |
+| Router + 1M-tool catalog + 10% calls to catalog tools | 173 | 81.6% | 54.7% (73.1%) | 10.1 ms | 23.6 ms | 424 ms | 857 MB | 0 |
+
+The router hop costs 0.7 ms at p50 and 2% throughput. With the million-tool catalog attached to every predictor, the service keeps 0 wrong results and its throughput within 6%; readiness slips 2 points because each prediction now also scores up to 128 catalog candidates, so prefetches start later (queue lag). The 6,188 calls to catalog tools on other servers were all forwarded to the shards owning their partition and executed there (stub upstream: there is no real backend for 500k public APIs in this harness), 0 wrong, 103 ms mean under load. No catalog tool was ever prefetched: only tools on a domain's read allowlist are run ahead of time.
 
 ## Live agent on tau-bench retail (Claude Haiku 4.5)
 

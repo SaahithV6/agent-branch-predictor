@@ -1,0 +1,8 @@
+{"sessions": 46, "sessions_p0": 16, "sessions_p1": 23, "text": 5824, "call": 14813, "forwarded": 1334, "exec_local": 112, "sessions_p2": 7, "task": 2099, "close": 46}
+{"sessions": 50, "sessions_p1": 21, "text": 6024, "sessions_p0": 19, "call": 15693, "sessions_p2": 10, "forwarded": 1416, "exec_local": 108, "task": 2135, "close": 50}
+{"sessions": 56, "sessions_p1": 18, "text": 7005, "sessions_p0": 26, "call": 18674, "forwarded": 1737, "exec_local": 119, "sessions_p2": 12, "task": 2575, "close": 56}
+{"sessions": 50, "sessions_p1": 21, "text": 6024, "sessions_p0": 19, "call": 15693, "sessions_p2": 10, "forwarded": 1416, "exec_local": 108, "task": 2135, "close": 50}
+{"sessions": 50, "sessions_p1": 21, "text": 6024, "sessions_p0": 19, "call": 15693, "sessions_p2": 10, "forwarded": 1416, "exec_local": 108, "task": 2135, "close": 50}
+{"sessions": 50, "sessions_p1": 21, "text": 6024, "sessions_p0": 19, "call": 15693, "sessions_p2": 10, "forwarded": 1416, "exec_local": 108, "task": 2135, "close": 50}
+{"sessions": 46, "sessions_p0": 16, "sessions_p1": 23, "text": 5824, "call": 14813, "forwarded": 1334, "exec_local": 112, "sessions_p2": 7, "task": 2099, "close": 46}
+{"sessions": 50, "sessions_p1": 21, "text": 6024, "sessions_p0": 19, "call": 15693, "sessions_p2": 10, "forwarded": 1416, "exec_local": 108, "task": 2135, "close": 50}

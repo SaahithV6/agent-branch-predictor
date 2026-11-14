@@ -14,6 +14,7 @@ later call is served from the cache instead of waiting on the tool.
   POST /task    {sid, task, reset=true}        next ticket in a long workflow: fresh environment and
                                                (unless reset=false) a clean slate for the predictor
   POST /close   {sid}
+  POST /exec    {name, args}                   run a tool for a session placed in another partition (router.py)
   GET  /metrics
 
 Built to run without limits on workflow length or session count:
@@ -118,6 +119,7 @@ class Shard:
         self.sessions = collections.OrderedDict()  # sid -> Session, least recently used first
         self.lock = threading.Lock()
         self.preds = {}
+        self.catalog = None  # set by serve_shard before any session opens
         self.io = ThreadPoolExecutor(int(os.environ.get("IO_THREADS", "16")))
         self.queue, self.queued, self.cv = collections.deque(), {}, threading.Condition()
         self.stats = Stats()
@@ -133,8 +135,10 @@ class Shard:
             m = json.load(open(meta)) if os.path.exists(meta) else {}
             path = os.path.join(self.models, f"gpred_{domain}_fold{fold}")
             # no model for this domain yet: serve its tools unpredicted rather than refuse the session
-            self.preds[k] = (G.Predictor(path) if os.path.exists(path + ".txt") else None,
-                             (m.get("window", WINDOW), m.get("text_chars", TEXT_CHARS)))
+            pred = G.Predictor(path) if os.path.exists(path + ".txt") else None
+            if pred is not None:
+                pred.fz.catalog = self.catalog  # this shard's partition of a large tool catalog, if any
+            self.preds[k] = (pred, (m.get("window", WINDOW), m.get("text_chars", TEXT_CHARS)))
         return self.preds[k]
 
     def open(self, domain, fold, task):
@@ -337,7 +341,11 @@ def handler(shard):
               "/text": lambda b: shard.text(b["sid"], b["text"]),
               "/call": lambda b: shard.call(b["sid"], b["name"], b.get("args") or {}),
               "/task": lambda b: shard.task(b["sid"], b.get("task"), b.get("reset", True)),
-              "/close": lambda b: shard.close(b["sid"])}
+              "/close": lambda b: shard.close(b["sid"]),
+              # a tool owned by this shard's partition, called from a session placed elsewhere (bench/router.py).
+              # No real backend for catalog tools in this harness: a stub upstream answers deterministically.
+              "/exec": lambda b: {"result": json.dumps({"tool": b["name"], "args": b.get("args") or {}, "upstream": "stub"}),
+                                  "source": "exec", "attached": False}}
 
     class H(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -370,8 +378,21 @@ def handler(shard):
     return H
 
 
-def serve_shard(idx, port, models):
-    srv = ThreadingHTTPServer(("127.0.0.1", port), handler(Shard(idx, models)))
+def partition_catalog(idx, catalog):
+    """This shard's catalog partition as a shortlist index; None without a catalog. catalog is the directory
+    `router.py shard-catalog` wrote, one file per partition (a shard never parses the rest). The catalog is
+    stateless, so its C partitions are hosted round-robin on the shard pool: partition idx % C."""
+    if not catalog:
+        return None
+    import toolindex as X
+    n = len([f for f in os.listdir(catalog) if f.startswith("p") and f.endswith(".jsonl")])
+    return X.ToolIndex(json.loads(line) for line in open(os.path.join(catalog, f"p{idx % n}.jsonl")))
+
+
+def serve_shard(idx, port, models, catalog=None):
+    shard = Shard(idx, models)
+    shard.catalog = partition_catalog(idx, catalog)
+    srv = ThreadingHTTPServer(("127.0.0.1", port), handler(shard))
     srv.daemon_threads = True
     srv.request_queue_size = 1024
     srv.serve_forever()
@@ -386,10 +407,11 @@ if __name__ == "__main__":
     ap.add_argument("--shards", type=int, default=4)
     ap.add_argument("--port", type=int, default=9100)
     ap.add_argument("--models", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "results", "live"))
+    ap.add_argument("--catalog", help="partitioned tool catalog (bench/router.py shard-catalog dir); shard i indexes partition i %% C")
     a = ap.parse_args()
     if a.shards == 1:
-        serve_shard(0, a.port, a.models)
-    ps = [mp.Process(target=serve_shard, args=(i, a.port + i, a.models), daemon=True) for i in range(a.shards)]
+        serve_shard(0, a.port, a.models, a.catalog)
+    ps = [mp.Process(target=serve_shard, args=(i, a.port + i, a.models, a.catalog), daemon=True) for i in range(a.shards)]
     for p in ps:
         p.start()
     print(f"prefetchd: {a.shards} shards on 127.0.0.1:{a.port}-{a.port + a.shards - 1}", flush=True)

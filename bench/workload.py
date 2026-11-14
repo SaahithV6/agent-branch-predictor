@@ -32,7 +32,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import realtools as RT  # noqa: E402
 import traces as TR  # noqa: E402
 
-BUCKETS = [20, 100, 500, 2000, 10 ** 9]  # position of the call within its session
+BUCKETS = [20, 100, 500, 2000, 10 ** 9]
+ROUTER = 0  # set from --router; read by Client in the forked client processes
+FOREIGN = []  # (server, tool) pairs from --foreign-tools  # position of the call within its session
 
 
 def workflows(args, models):
@@ -60,8 +62,10 @@ class Client:
         self.port, self.shards, self.conns = port, shards, {}
 
     def post(self, shard, path, body):
+        if ROUTER:
+            shard = -1  # one router port; the session id says which shard
         for attempt in range(3):
-            c = self.conns.get(shard) or http.client.HTTPConnection("127.0.0.1", self.port + shard, timeout=120)
+            c = self.conns.get(shard) or http.client.HTTPConnection("127.0.0.1", ROUTER or self.port + shard, timeout=120)
             self.conns[shard] = c
             try:
                 c.request("POST", path, json.dumps(body), {"Content-Type": "application/json"})
@@ -84,7 +88,7 @@ def bucket(pos):
 def run_workflow(w, cl, a, st, lat):
     shard = zlib.crc32(w["id"].encode()) % a.shards
     tickets = w["tickets"]
-    sid = cl.post(shard, "/session", {"domain": w["domain"], "fold": w["fold"], "task": tickets[0]["task"]})["sid"]
+    sid = cl.post(shard, "/session", {"domain": w["domain"], "fold": w["fold"], "task": tickets[0]["task"], "servers": [w["domain"]]})["sid"]
     pos = 0
     for i, t in enumerate(tickets):
         if i:
@@ -112,6 +116,16 @@ def run_workflow(w, cl, a, st, lat):
                     c[f"prefetched_b{b}"] += r["source"] in ("cache", "inflight")  # memo: a repeat of the agent's own read
                     c[f"attached_b{b}"] += bool(r["attached"])
             pos += 1
+            if FOREIGN and random.random() < a.foreign_rate:  # a catalog tool on another server, through the router
+                server, name = random.choice(FOREIGN)
+                t0 = time.perf_counter()
+                r = cl.post(shard, "/call", {"sid": sid, "name": name, "server": server, "args": {"q": pos}})
+                ms = (time.perf_counter() - t0) * 1000
+                ok = json.loads(r["result"]) == {"tool": name, "args": {"q": pos}, "upstream": "stub"}
+                with st["lock"]:
+                    st["n"]["foreign_calls"] += 1
+                    st["n"]["foreign_mismatch"] += not ok
+                    st["n"]["foreign_ms_x1000"] += int(ms * 1000)
             time.sleep(a.think)
     cl.post(shard, "/close", {"sid": sid})
 
@@ -173,6 +187,8 @@ def summarize(a, n, lat, shards, wall, total_planned, errors):
         "tool_calls": n.get("calls", 0), "wall_s": round(wall, 1), "calls_per_s": round(n.get("calls", 0) / wall, 1),
         "workflow_errors": len(errors), "error_examples": errors[:5],
         "served": {k[7:]: v for k, v in n.items() if k.startswith("source_")},
+        "foreign": {"calls": n.get("foreign_calls", 0), "mismatches": n.get("foreign_mismatch", 0),
+                    "mean_ms": round(n.get("foreign_ms_x1000", 0) / 1000 / max(n.get("foreign_calls", 0), 1), 3)},
         "mismatches": {k[9:]: v for k, v in n.items() if k.startswith("mismatch_")},
         "reads": reads, "ready_ahead": round(sum(n.get(f"prefetched_b{i}", 0) for i in range(len(BUCKETS))) / max(reads, 1), 4),
         "attached": round(sum(n.get(f"attached_b{i}", 0) for i in range(len(BUCKETS))) / max(reads, 1), 4),
@@ -201,7 +217,13 @@ if __name__ == "__main__":
     ap.add_argument("--domains", default=",".join(RT.DOMAINS))
     ap.add_argument("--models", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "results", "live"))
     ap.add_argument("--out")
+    ap.add_argument("--router", type=int, default=0, help="send everything through bench/router.py on this port")
+    ap.add_argument("--foreign-tools", help="catalog jsonl: with --foreign-rate, also call random catalog tools via the router")
+    ap.add_argument("--foreign-rate", type=float, default=0.0)
     a = ap.parse_args()
+    ROUTER = a.router
+    if a.foreign_tools:
+        FOREIGN = [(t["server"], t["name"]) for t in map(json.loads, open(a.foreign_tools)) if t["read"]]
     WS, planned, passes = workflows(a, a.models)
     A, PROGRESS = a, mp.Value("q", 0)
     progress = PROGRESS

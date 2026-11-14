@@ -1,0 +1,8 @@
+{"sessions": 45, "sessions_p1": 22, "text": 5820, "sessions_p0": 15, "call": 14559, "task": 2103, "sessions_p2": 8, "close": 45}
+{"sessions": 42, "sessions_p1": 17, "text": 5372, "sessions_p0": 18, "call": 13928, "sessions_p2": 7, "task": 1892, "close": 42}
+{"sessions": 42, "sessions_p1": 17, "text": 5372, "sessions_p0": 18, "call": 13928, "sessions_p2": 7, "task": 1892, "close": 42}
+{"sessions": 45, "sessions_p1": 22, "text": 5820, "sessions_p0": 15, "call": 14559, "task": 2103, "sessions_p2": 8, "close": 45}
+{"sessions": 53, "sessions_p1": 19, "text": 6833, "sessions_p0": 24, "call": 17892, "task": 2511, "sessions_p2": 10, "close": 53}
+{"sessions": 54, "sessions_p1": 22, "sessions_p0": 19, "text": 6025, "call": 16091, "sessions_p2": 13, "task": 2176, "close": 54}
+{"sessions": 54, "sessions_p1": 22, "sessions_p0": 19, "text": 6025, "call": 16091, "sessions_p2": 13, "task": 2176, "close": 54}
+{"sessions": 54, "sessions_p1": 22, "sessions_p0": 19, "text": 6025, "call": 16091, "sessions_p2": 13, "task": 2176, "close": 54}

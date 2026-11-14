@@ -1,0 +1,104 @@
+{
+ "config": {
+  "tau": "/home/lain_iwakura/Documents/tau-bench",
+  "calls": 60000,
+  "chain": 50,
+  "clients": 10,
+  "threads": 12,
+  "think": 0.2,
+  "shards": 16,
+  "port": 9700,
+  "blind": false,
+  "domains": "retail,airline,telecom",
+  "models": "bench/results/live_long_ctx",
+  "out": "bench/results/catalog/svc_router_1m.json",
+  "router": 9690,
+  "foreign_tools": "data/catalogs/foreign_sample.jsonl",
+  "foreign_rate": 0.1
+ },
+ "env": {},
+ "tool_calls": 62470,
+ "wall_s": 360.2,
+ "calls_per_s": 173.4,
+ "workflow_errors": 0,
+ "error_examples": [],
+ "served": {
+  "cache": 39502,
+  "exec": 22792,
+  "memo": 135,
+  "inflight": 41
+ },
+ "foreign": {
+  "calls": 6188,
+  "mismatches": 0,
+  "mean_ms": 102.902
+ },
+ "mismatches": {},
+ "reads": 48472,
+ "ready_ahead": 0.8158,
+ "attached": 0.547,
+ "attach_precision": 0.7305,
+ "prefetch_precision": 0.3688,
+ "by_position": [
+  {
+   "calls_into_session": "<20",
+   "reads": 3089,
+   "ready_ahead": 0.8343,
+   "attached": 0.5665
+  },
+  {
+   "calls_into_session": "<100",
+   "reads": 11727,
+   "ready_ahead": 0.8238,
+   "attached": 0.5312
+  },
+  {
+   "calls_into_session": "<500",
+   "reads": 33656,
+   "ready_ahead": 0.8113,
+   "attached": 0.5507
+  }
+ ],
+ "client_call_ms": {
+  "50": 10.087,
+  "90": 148.217,
+  "99": 603.942
+ },
+ "server_ms_median_of_shards": {
+  "call": {
+   "50": 0.151,
+   "90": 0.377,
+   "99": 1.868
+  },
+  "predict": {
+   "50": 23.608,
+   "90": 60.205,
+   "99": 258.904
+  },
+  "queue_lag": {
+   "50": 7.45,
+   "90": 140.568,
+   "99": 424.274
+  }
+ },
+ "server_counts": {
+  "sessions": 194,
+  "predictions": 81931,
+  "attached": 36299,
+  "prefetch_started": 91285,
+  "prefetch_done": 91219,
+  "prefetch_used": 33639,
+  "calls": 62470,
+  "served_cache": 39502,
+  "attached_hit": 26515,
+  "served_exec": 22792,
+  "writes": 10506,
+  "coalesced": 4581,
+  "predictions_stale": 637,
+  "served_inflight": 41,
+  "prefetch_skipped": 66,
+  "served_memo": 135
+ },
+ "rss_mb_per_shard_max": 857,
+ "planned_calls": 62470
+}
