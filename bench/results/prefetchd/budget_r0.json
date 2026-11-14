@@ -1,0 +1,104 @@
+{
+ "config": {
+  "tau": "/home/lain_iwakura/Documents/tau-bench",
+  "calls": 30000,
+  "chain": 50,
+  "clients": 4,
+  "threads": 32,
+  "think": 0.2,
+  "shards": 4,
+  "port": 9100,
+  "blind": false,
+  "domains": "retail,airline,telecom",
+  "models": "/home/lain_iwakura/Documents/agent-branch-predictor/bench/results/live",
+  "out": "bench/results/prefetchd/budget_r0.json",
+  "router": 0,
+  "foreign_tools": null,
+  "foreign_rate": 0.0
+ },
+ "env": {},
+ "tool_calls": 31235,
+ "wall_s": 255.5,
+ "calls_per_s": 122.3,
+ "workflow_errors": 0,
+ "error_examples": [],
+ "served": {
+  "exec": 13372,
+  "cache": 17719,
+  "inflight": 66,
+  "memo": 78
+ },
+ "foreign": {
+  "calls": 0,
+  "mismatches": 0,
+  "mean_ms": 0.0
+ },
+ "mismatches": {},
+ "reads": 24236,
+ "ready_ahead": 0.7338,
+ "attached": 0.4175,
+ "attach_precision": 0.7717,
+ "prefetch_precision": 0.4144,
+ "by_position": [
+  {
+   "calls_into_session": "<20",
+   "reads": 1520,
+   "ready_ahead": 0.7632,
+   "attached": 0.4579
+  },
+  {
+   "calls_into_session": "<100",
+   "reads": 5869,
+   "ready_ahead": 0.7359,
+   "attached": 0.3987
+  },
+  {
+   "calls_into_session": "<500",
+   "reads": 16847,
+   "ready_ahead": 0.7305,
+   "attached": 0.4204
+  }
+ ],
+ "client_call_ms": {
+  "50": 37.825,
+  "90": 323.714,
+  "99": 1032.434
+ },
+ "server_ms_median_of_shards": {
+  "call": {
+   "50": 0.105,
+   "90": 0.356,
+   "99": 1.306
+  },
+  "predict": {
+   "50": 4.952,
+   "90": 28.663,
+   "99": 232.353
+  },
+  "queue_lag": {
+   "50": 45.755,
+   "90": 385.541,
+   "99": 986.595
+  }
+ },
+ "server_counts": {
+  "sessions": 97,
+  "predictions": 36903,
+  "attached": 13113,
+  "prefetch_started": 36974,
+  "prefetch_done": 36936,
+  "prefetch_used": 15306,
+  "calls": 31235,
+  "served_cache": 17719,
+  "attached_hit": 10119,
+  "served_exec": 13372,
+  "writes": 5253,
+  "coalesced": 6352,
+  "prefetch_skipped": 38,
+  "served_memo": 78,
+  "served_inflight": 66,
+  "predictions_stale": 174
+ },
+ "rss_mb_per_shard_max": 888,
+ "planned_calls": 31235
+}

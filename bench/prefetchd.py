@@ -28,6 +28,9 @@ Built to run without limits on workflow length or session count:
   stamped with an older generation is never served, and one that finishes late is dropped.
   Only tools that are on the domain's read allowlist and that tau2 itself marks as non-mutating
   are ever run ahead of time.
+- Upstream quota: with UPSTREAM_RATE set, each upstream server gets a token bucket per shard. The
+  agent's own calls always draw from it and are never refused; a prefetch runs only while the bucket
+  holds a whole token, so speculation spends only quota the agent left unused.
 """
 
 import collections
@@ -54,6 +57,9 @@ CACHE_MAX = int(os.environ.get("CACHE_MAX", "256"))
 MAX_PREFETCH = int(os.environ.get("MAX_PREFETCH", "8"))
 MAX_SESSIONS = int(os.environ.get("MAX_SESSIONS", "256"))  # each holds its own tau2 database (25-80 MB); real tools would share one
 WAIT = float(os.environ.get("PREFETCH_WAIT", "2.0"))  # longest a call waits on its own prefetch
+# calls/s one shard may send each upstream server (its quota / shards); 0 = unlimited
+UPSTREAM_RATE = float(os.environ.get("UPSTREAM_RATE", "0"))
+UPSTREAM_BURST = float(os.environ.get("UPSTREAM_BURST", "0")) or max(UPSTREAM_RATE, 1.0)
 SAMPLES = 20000  # latency reservoir per metric
 
 
@@ -82,6 +88,27 @@ class Stats:
         with self.lock:
             pct = {k: {q: round(float(np.percentile(v, q)), 3) for q in (50, 90, 99)} for k, v in self.ms.items() if v}
             return {"counts": {k: v for k, v in self.n.items() if not k.startswith("_")}, "ms": pct}
+
+
+class Bucket:
+    """Token bucket for one upstream server. take(force=True) is the agent: it always gets through,
+    and may drive the balance negative so prefetches wait until the agent's use is paid back."""
+
+    def __init__(self, rate, burst):
+        self.rate, self.burst, self.tokens, self.t = rate, burst, burst, time.monotonic()
+        self.lock = threading.Lock()
+
+    def take(self, force=False):
+        if not self.rate:
+            return True
+        with self.lock:
+            now = time.monotonic()
+            self.tokens = min(self.burst, self.tokens + (now - self.t) * self.rate)
+            self.t = now
+            if force or self.tokens >= 1:
+                self.tokens -= 1
+                return True
+            return False
 
 
 class Session:
@@ -123,6 +150,9 @@ class Shard:
         self.io = ThreadPoolExecutor(int(os.environ.get("IO_THREADS", "16")))
         self.queue, self.queued, self.cv = collections.deque(), {}, threading.Condition()
         self.stats = Stats()
+        # ponytail: a server is the session's domain (one tau2 backend each); key by tool owner once
+        # catalog tools are prefetched. Split per shard: a central limiter if shard load is uneven.
+        self.buckets = collections.defaultdict(lambda: Bucket(UPSTREAM_RATE, UPSTREAM_BURST))
         self.count = 0
         threading.Thread(target=self.predict_loop, daemon=True).start()
 
@@ -211,6 +241,7 @@ class Shard:
                     out, src = e[1], "inflight"
         with s.lock:
             if out is None:
+                self.buckets[s.domain].take(force=True)
                 out, write = RT.call(s.env, name, args)
                 if write:
                     s.gen += 1
@@ -293,6 +324,9 @@ class Shard:
                         self.stats.add(attached=1)
                     s.attached[k] = gen
                 if started >= MAX_PREFETCH or k in s.inflight or (k in s.cache and s.cache[k][0] == gen):
+                    continue
+                if not self.buckets[s.domain].take():
+                    self.stats.add(prefetch_over_budget=1)
                     continue
                 started += 1
                 s.inflight[k] = self.io.submit(self.prefetch, s, k, name, json.loads(k[len(name):]), gen)

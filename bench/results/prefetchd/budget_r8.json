@@ -1,0 +1,105 @@
+{
+ "config": {
+  "tau": "/home/lain_iwakura/Documents/tau-bench",
+  "calls": 30000,
+  "chain": 50,
+  "clients": 4,
+  "threads": 32,
+  "think": 0.2,
+  "shards": 4,
+  "port": 9100,
+  "blind": false,
+  "domains": "retail,airline,telecom",
+  "models": "/home/lain_iwakura/Documents/agent-branch-predictor/bench/results/live",
+  "out": "bench/results/prefetchd/budget_r8.json",
+  "router": 0,
+  "foreign_tools": null,
+  "foreign_rate": 0.0
+ },
+ "env": {},
+ "tool_calls": 31235,
+ "wall_s": 254.1,
+ "calls_per_s": 122.9,
+ "workflow_errors": 0,
+ "error_examples": [],
+ "served": {
+  "cache": 1080,
+  "exec": 29530,
+  "memo": 623,
+  "inflight": 2
+ },
+ "foreign": {
+  "calls": 0,
+  "mismatches": 0,
+  "mean_ms": 0.0
+ },
+ "mismatches": {},
+ "reads": 24236,
+ "ready_ahead": 0.0446,
+ "attached": 0.4216,
+ "attach_precision": 0.7765,
+ "prefetch_precision": 0.5028,
+ "by_position": [
+  {
+   "calls_into_session": "<20",
+   "reads": 1520,
+   "ready_ahead": 0.1211,
+   "attached": 0.4507
+  },
+  {
+   "calls_into_session": "<100",
+   "reads": 5869,
+   "ready_ahead": 0.032,
+   "attached": 0.4052
+  },
+  {
+   "calls_into_session": "<500",
+   "reads": 16847,
+   "ready_ahead": 0.0421,
+   "attached": 0.4248
+  }
+ ],
+ "client_call_ms": {
+  "50": 37.343,
+  "90": 302.852,
+  "99": 966.332
+ },
+ "server_ms_median_of_shards": {
+  "call": {
+   "50": 0.204,
+   "90": 0.412,
+   "99": 1.379
+  },
+  "predict": {
+   "50": 4.724,
+   "90": 28.745,
+   "99": 222.787
+  },
+  "queue_lag": {
+   "50": 42.697,
+   "90": 338.87,
+   "99": 1062.099
+  }
+ },
+ "server_counts": {
+  "sessions": 97,
+  "predictions": 37209,
+  "attached": 13160,
+  "prefetch_started": 1944,
+  "prefetch_done": 1941,
+  "calls": 31235,
+  "served_exec": 29530,
+  "attached_hit": 10219,
+  "prefetch_used": 976,
+  "served_cache": 1080,
+  "prefetch_over_budget": 74549,
+  "writes": 5253,
+  "served_memo": 623,
+  "coalesced": 6044,
+  "predictions_stale": 204,
+  "served_inflight": 2,
+  "prefetch_skipped": 3
+ },
+ "rss_mb_per_shard_max": 958,
+ "planned_calls": 31235
+}

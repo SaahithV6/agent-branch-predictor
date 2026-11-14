@@ -63,7 +63,7 @@ and the conversation, never with the catalog.
 |---|---|---|---|
 | 6.1 | Prefetching a call with side effects | Only tools classified read *and* on the domain's read allowlist are ever prefetched; unknown means write. Catalog writes are never indexed; in the 1M service run no catalog tool was prefetched. | done |
 | 6.2 | A read racing a write | Generation counter per session; reads touched by a write are invalidated (done for single-domain prefetchd). | done |
-| 6.3 | Upstream rate limits and cost | Per-server prefetch budget; a prefetch never spends the agent's own quota past it. | open |
+| 6.3 | Upstream rate limits and cost | Per-server token bucket per shard (`UPSTREAM_RATE`, `UPSTREAM_BURST`): agent calls always pass and are charged; a prefetch runs only on a whole spare token. | built |
 | 6.4 | Tenancy | Session tool sets are per tenant; a prediction can only name tools in its session's set. | built |
 
 ## 7. Measurement
@@ -79,4 +79,5 @@ and the conversation, never with the catalog.
 
 - Retail accuracy with 0 -> 1M catalog tools: 87.7% precision / 76.5% coverage at every size, 0 catalog guesses, 9.3 -> 16.6 ms per prediction (flat past 1k). `results/catalog/scale.json`
 - Service, 60k calls, 16 shards: direct 184 calls/s, router 181, router + 1M catalog + 10% catalog calls 173; 0 wrong results in all three; 6,188 forwarded catalog calls, 0 wrong. `results/catalog/svc_*.json`
-- Still open: 1.6 (catalog updates while sessions run), 6.3 (per-server prefetch budgets). Catalog tools have no real upstream in this harness (stub executor).
+- Prefetch budget, 31k calls, 4 shards (agents send ~10 calls/s per shard per domain): unlimited 73.4% ready ahead, 36,974 prefetches; `UPSTREAM_RATE=8` (below agent demand) 4.5% ready, 1,944 prefetches, 74,549 refused; agent throughput 122 calls/s and 0 mismatches either way. `results/prefetchd/budget_r{0,8}.json`
+- Still open: 1.6 (catalog updates while sessions run). Catalog tools have no real upstream in this harness (stub executor).

@@ -212,6 +212,24 @@ def test_domain_without_model_is_served_unpredicted():
     assert sh.stats.n["predictions"] == 0 and sh.stats.n["predict_errors"] == 0
 
 
+def test_prefetch_spends_only_quota_the_agent_left():
+    sh = shard(Fake([P.G.key(*READ)]))
+    sh.buckets["retail"] = P.Bucket(rate=0.5, burst=1)  # one call per 2 s
+    sid = sh.open("retail", 0, None)["sid"]
+    s = sh.get(sid)
+    sh.call(sid, "get_user_details", {"user_id": "none"})  # the agent spends the only token
+    settle(sh, s)
+    assert sh.stats.n["prefetch_over_budget"] >= 1 and sh.stats.n["prefetch_started"] == 0
+    assert sh.call(sid, *READ)["source"] == "exec"  # the agent is never refused; balance now -1
+    sh.call(sid, "get_user_details", {"user_id": "none2"})
+    assert sh.stats.n["served_exec"] == 3
+    time.sleep(6.1)  # pay back -2 and earn one token
+    s.pred.keys = [P.G.key("get_order_details", {"order_id": "#W2378156"})]
+    sh.text(sid, "and my other order")
+    settle(sh, s)
+    assert sh.stats.n["prefetch_started"] == 1
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for t in tests:
