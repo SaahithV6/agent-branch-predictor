@@ -1,0 +1,137 @@
+{
+ "config": {
+  "cmd": "run",
+  "train": 3000,
+  "dev": 1500,
+  "test": 1500,
+  "k": 50,
+  "workers": 8,
+  "size": null,
+  "settings": "catalog"
+ },
+ "catalog_tools": 1019694,
+ "embeddings": true,
+ "catalog": {
+  "dev": {
+   "examples": 1500,
+   "retrieved": 0.7873,
+   "tool_top1": 0.2613,
+   "call_top1": 0.146,
+   "ms_p50": 233.92,
+   "ms_p99": 438.84,
+   "@0.5": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.6": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.7": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "test_toolbench": {
+   "examples": 1500,
+   "retrieved": 0.8227,
+   "tool_top1": 0.316,
+   "call_top1": 0.1727,
+   "ms_p50": 227.91,
+   "ms_p99": 427.29,
+   "@0.5": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.6": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.7": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "test_toolace": {
+   "examples": 1500,
+   "retrieved": 0.85,
+   "tool_top1": 0.3507,
+   "call_top1": 0.07,
+   "ms_p50": 224.07,
+   "ms_p99": 496.69,
+   "@0.5": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.6": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.7": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "seconds": 243,
+  "ranker_gain": {
+   "bm25": 16062.5,
+   "rank": 71276.4,
+   "rel_top": 24651.8,
+   "gap_next": 12482.1,
+   "same_server_last": 2226.6,
+   "server_seen": 54201.6,
+   "called_before": 2473.2,
+   "is_last_tool": 418.1,
+   "q_name_overlap": 14913.6,
+   "q_server_overlap": 6844.4,
+   "n_args": 5361.5,
+   "n_req": 3269.8,
+   "req_fillable": 969.0,
+   "n_key_hits": 2784.7,
+   "n_prior": 8702.6,
+   "emb_cos": 15825.3,
+   "emb_rank": 15821.5,
+   "session": 0.0,
+   "server_named": 2627.2
+  }
+ }
+}

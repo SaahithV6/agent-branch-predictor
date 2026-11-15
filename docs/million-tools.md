@@ -81,3 +81,25 @@ and the conversation, never with the catalog.
 - Service, 60k calls, 16 shards: direct 184 calls/s, router 181, router + 1M catalog + 10% catalog calls 173; 0 wrong results in all three; 6,188 forwarded catalog calls, 0 wrong. `results/catalog/svc_*.json`
 - Prefetch budget, 31k calls, 4 shards (agents send ~10 calls/s per shard per domain): unlimited 73.4% ready ahead, 36,974 prefetches; `UPSTREAM_RATE=8` (below agent demand) 4.5% ready, 1,944 prefetches, 74,549 refused; agent throughput 122 calls/s and 0 mismatches either way. `results/prefetchd/budget_r{0,8}.json`
 - Still open: 1.6 (catalog updates while sessions run). Catalog tools have no real upstream in this harness (stub executor).
+
+## Zero-shot prediction over every tool (2026-11-14)
+
+`bench/zpred.py` (train/eval) and `bench/zserve.py` (serving API). No per-tool history: test calls are on
+ToolBench servers held out of training (18,549 calls, 329 APIs). Candidates = BM25 top 50 over the catalog
++ the best 20 tools of every server already called or named in the request; LightGBM ranks, a slot model
+fills arguments, a gate decides whether to prefetch. Three calls are prefetched per firing; it pays off if
+the agent makes any of them later. Training: ToolBench + ToolACE (60k calls).
+
+| catalog | correct call among the 3 | gate fires | of those, paid off | ms p50 / p99 |
+|---|---|---|---|---|
+| session tools (agent's own, drawn from the 1M) | 46.2% | 34% / 13% | 75% / 83% | 6 / 23 |
+| full 1.02M catalog | 29.0% | 12% | 61% | 17 / 39 |
+
+- At 1M, by step: next call on a server already used (47% of steps) 43% right; first call 22%; a switch to
+  a new server 6%. Retrieval was the limit at 1M (71% in BM25 top 50); server retrieval lifts it to 79%.
+- Catalog-size sweep (single call, BM25 only): exact call 18.6% at 20k, 15.6% at 1M, 11.8% at 3M with
+  mirror-server lookalikes; latency linear in catalog size (4 -> 15 -> 38 ms). `results/zpred/run_bm25_n*.json`
+- Static embeddings (model2vec potion-retrieval-32M, `embed.py --local`): +1.7 points of retrieval for 15x
+  latency (1 GB mat-vec per query); off by default. A hosted 8B embedder (`embed.py`, Nebius) is untested.
+- Ceiling: 32% of argument values are invented by the agent (in no prior text), so exact calls cap near 68%.
+- Gate thresholds are certified on dev; test precision runs ~10-25 points below the dev target.

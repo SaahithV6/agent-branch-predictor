@@ -14,6 +14,7 @@ Resumable: finished batches are kept in emb/parts/ and skipped on a rerun. Spend
 import argparse
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -75,6 +76,11 @@ def embed(texts, api_key, spend):
 
 
 def run(name, texts, a):
+    if a.local:  # a static (model2vec) embedder on CPU: ~90k texts/s, no API, no spend
+        from model2vec import StaticModel
+        v = StaticModel.from_pretrained(a.local).encode([readable(t) for t in texts], batch_size=4096)[:, :DIM]
+        print(f"{name}: {len(texts):,} texts embedded locally with {a.local}", flush=True)
+        return (v / (np.linalg.norm(v, axis=1, keepdims=True) + 1e-9)).astype(np.float16)
     PARTS.mkdir(parents=True, exist_ok=True)
     api_key, spend = key(), Spend(a.max_tokens)
     n = (len(texts) + BATCH - 1) // BATCH
@@ -96,6 +102,11 @@ def run(name, texts, a):
     return out
 
 
+def readable(s):
+    # split identifiers into words: a static embedder only knows words ("getUserRepos" -> "get User Repos")
+    return re.sub(r"[_/\-.~@]+", " ", re.sub(r"(?<=[a-z])(?=[A-Z])", " ", s.replace(INSTRUCT, "")))
+
+
 def tool_text(t):
     args = ", ".join(x["name"] for x in t.get("args", []))
     return f"{t['server']} / {t['name']}({args}): {t.get('desc', '')[:400]}"
@@ -114,6 +125,7 @@ if __name__ == "__main__":
     ap.add_argument("what", choices=["tools", "contexts", "probe"])
     ap.add_argument("--max-tokens", type=int, default=300_000_000)
     ap.add_argument("--threads", type=int, default=8)
+    ap.add_argument("--local", help="embed on CPU with this model2vec model instead, e.g. minishlab/potion-retrieval-32M")
     a = ap.parse_args()
     EMB.mkdir(parents=True, exist_ok=True)
     if a.what == "probe":  # one tiny call: checks key, model name and the price basis
