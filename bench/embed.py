@@ -8,7 +8,7 @@ Resumable: finished batches are kept in emb/parts/ and skipped on a rerun. Spend
 --max-tokens across the whole run; the API's own usage counts are what is tallied.
 
     NEBIUS_API_KEY in env.local
-    python3 -I bench/embed.py tools|contexts [--max-tokens 120000000]
+    python3 -I bench/embed.py tools|contexts [--max-tokens 300000000]
 """
 
 import argparse
@@ -112,10 +112,8 @@ def context_text(ex):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("what", choices=["tools", "contexts", "probe"])
-    ap.add_argument("--max-tokens", type=int, default=120_000_000)
+    ap.add_argument("--max-tokens", type=int, default=300_000_000)
     ap.add_argument("--threads", type=int, default=8)
-    ap.add_argument("--train", type=int, default=30000)
-    ap.add_argument("--dev", type=int, default=8000)
     a = ap.parse_args()
     EMB.mkdir(parents=True, exist_ok=True)
     if a.what == "probe":  # one tiny call: checks key, model name and the price basis
@@ -131,7 +129,8 @@ if __name__ == "__main__":
                     texts.append(tool_text(t))
         np.save(EMB / "tools.npy", run("tools", texts, a))
     else:
-        for split, lim in (("train", a.train), ("dev", a.dev), ("test", None)):
-            xs = Z.load(split, lim)
+        # every example of every split: zpred samples train/dev itself (same seed), test is used whole
+        for split in ("train", "dev", "test"):
+            xs = Z.load(split)
             np.save(EMB / f"ctx_{split}.npy", run(f"ctx_{split}", [context_text(x) for x in xs], a))
-            json.dump({f"{x['conv']}:{len(x['prior'])}": i for i, x in enumerate(xs)}, open(EMB / f"ctx_{split}.json", "w"))
+            json.dump({f"{x['src']}:{x['conv']}:{len(x['prior'])}": i for i, x in enumerate(xs)}, open(EMB / f"ctx_{split}.json", "w"))

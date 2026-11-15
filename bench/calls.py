@@ -145,5 +145,92 @@ def toolbench():
     return n
 
 
+def py_calls(s):
+    """'[A B(x="1", y=2), C()]' -> [("A B", {"x": "1", "y": 2}), ("C", {})]; None if it does not parse."""
+    s, out, i = s.strip()[1:-1], [], 0
+    while i < len(s):
+        j = s.find("(", i)
+        if j < 0:
+            break
+        name, depth, q, k = s[i:j].strip(" ,"), 0, None, j
+        for k in range(j, len(s)):  # the matching ")", skipping quoted text
+            ch = s[k]
+            if q:
+                q = None if ch == q and s[k - 1] != "\\" else q
+            elif ch in "\"'":
+                q = ch
+            elif ch in "([{":
+                depth += 1
+            elif ch in ")]}":
+                depth -= 1
+                if not depth:
+                    break
+        src = s[j + 1:k]
+        for txt in (src, re.sub(r"\b(true|false|null)\b", lambda m: {"null": "None"}.get(m[0], m[0].title()), src)):
+            try:
+                out.append((name, {a.arg: ast.literal_eval(a.value)
+                                   for a in ast.parse(f"f({txt})", mode="eval").body.keywords}))
+                break
+            except (SyntaxError, ValueError):
+                pass
+        else:
+            return None
+        i = k + 1
+    return out
+
+
+def toolace():
+    """ToolACE (Team-ACE): 11k dialogs over ~26k synthetic APIs, one API per server. Mostly single calls."""
+    d = json.load(open(DATA / "Team-ACE_ToolACE_data.json"))
+    tools, n = {}, {"dialogs": len(d), "calls": 0, "mapped": 0}
+    out = open(DATA / "toolace.jsonl", "w")
+    for di, x in enumerate(d):
+        s = x["system"]
+        i = s.find("[", s.find("can invoke:"))
+        try:
+            fns = json.loads(s[i:s.rindex("]. \nShould") + 1])
+        except ValueError:
+            continue
+        ids = {}
+        for f in fns:
+            props = (f.get("parameters") or {}).get("properties") or {}
+            req = set((f.get("parameters") or {}).get("required") or [])
+            tid = f"toolace/{f['name']}/{f['name']}"
+            ids[f["name"]] = tid
+            tools.setdefault(tid, {"source": "toolace", "server": f["name"], "name": f["name"], "read": True,
+                                   "args": [{"name": k, "type": v.get("type", "string"), "required": k in req}
+                                            for k, v in props.items() if isinstance(v, dict)],
+                                   "desc": str(f.get("description", ""))[:1000], "id": tid})
+        session, prior, users = sorted(ids.values()), [], []
+        conv = x["conversations"]
+        for ci, c in enumerate(conv):
+            if c["from"] == "user":
+                users.append(c["value"])
+            if c["from"] != "assistant" or not c["value"].startswith("["):
+                continue
+            calls = py_calls(c["value"]) or []
+            result = conv[ci + 1]["value"][:RESULT_CHARS] if ci + 1 < len(conv) and conv[ci + 1]["from"] == "tool" else ""
+            step = []
+            for name, args in calls:
+                n["calls"] += 1
+                if name not in ids:
+                    continue
+                n["mapped"] += 1
+                # parallel calls in one turn share the same prior
+                out.write(json.dumps({"src": "toolace", "conv": zlib.crc32(f"toolace{di}".encode()),
+                                      "split": split_of(name), "query": "\n".join(users), "session": session,
+                                      "prior": list(prior), "tool": ids[name], "args": args}) + "\n")
+                step.append({"tool": ids[name], "args": args, "result": result})
+            prior += step
+    out.close()
+    with open(DATA / "tools_toolace.jsonl", "w") as f:
+        for t in tools.values():
+            f.write(json.dumps(t) + "\n")
+    n["tools"] = len(tools)
+    return n
+
+
 if __name__ == "__main__":
-    print({"toolbench": toolbench}[sys.argv[1]]())
+    assert py_calls('[A B(x="a, (b)", y=2), C(), D(z=[1, 2], w=true)]') == [("A B", {"x": "a, (b)", "y": 2}), ("C", {}),
+                                                                         ("D", {"z": [1, 2], "w": True})]
+    print({"toolbench": toolbench, "toolace": toolace}[sys.argv[1]]())

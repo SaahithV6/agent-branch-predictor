@@ -19,10 +19,12 @@ import collections
 import json
 import multiprocessing as mp
 import os
+import random
 import re
 import sys
 import time
 import zlib
+from array import array
 from pathlib import Path
 
 import lightgbm as lgb
@@ -32,8 +34,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from toolindex import tokens as name_tokens  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-CATALOGS = [ROOT / "data/catalogs/tools_1m.jsonl", ROOT / "data/calls/tools_toolbench_traj.jsonl"]
-EXAMPLES = ROOT / "data/calls/toolbench.jsonl"
+CATALOGS = [ROOT / "data/catalogs/tools_1m.jsonl", ROOT / "data/calls/tools_toolbench_traj.jsonl",
+            ROOT / "data/calls/tools_toolace.jsonl"]
+SOURCES = ("toolbench", "toolace")  # bench/calls.py <source> -> data/calls/<source>.jsonl
 OUT = ROOT / "bench/results/zpred"
 EMB = ROOT / "data/calls/emb"  # optional: tools.npy (aligned with catalog order) + ctx_<split>.npy (aligned with examples)
 
@@ -59,26 +62,38 @@ def tool_words(t):
 
 # ---------------------------------------------------------------------------------- catalog + BM25
 class Catalog:
-    def __init__(self, paths=CATALOGS):
+    def __init__(self, paths=CATALOGS, size=None, keep=()):
+        """size: scale the catalog to this many tools. Below the real count, a random subset that always holds
+        `keep` (every tool the evaluated examples touch); above it, padded with mirror servers: exact copies of
+        random tools under a new server name, the hardest lookalike there is (only the server tells them apart)."""
         t0 = time.time()
         self.tools, self.pos = [], {}
-        vocab, rows, cols, lens = {}, [], [], []
+        vocab, rows, cols, lens = {}, array("i"), array("i"), []
+        total = sum(1 for p in paths for _ in open(p)) if size else 0
+        p_in = min(1.0, (size - len(keep)) / max(1, total - len(keep))) if size else 1.0
+        extra = max(0.0, (size - total) / total) if size else 0.0
+        rng = random.Random(0)
         for p in paths:
             for line in open(p):
                 t = json.loads(line)
-                if t["id"] in self.pos:
+                if t["id"] in self.pos or (t["id"] not in keep and rng.random() > p_in):
                     continue
-                d = len(self.tools)
-                self.pos[t["id"]] = d
-                self.tools.append({"id": t["id"], "server": t["server"], "name": t["name"],
-                                   "args": t.get("args", []), "nt": name_tokens(t["name"]), "st": name_tokens(t["server"])})
-                ws = tool_words(t)
-                lens.append(len(ws))
-                for w, c in collections.Counter(ws).items():
-                    rows.append(vocab.setdefault(w, len(vocab)))
-                    cols.append(d)
-                    # tf stored inline: (word, doc, count) triples
-                    cols.append(c)
+                rec = {"id": t["id"], "server": t["server"], "name": t["name"],
+                       "args": t.get("args", []), "nt": name_tokens(t["name"]), "st": name_tokens(t["server"])}
+                ws = collections.Counter(tool_words(t)).items()
+                copies = int(extra) + (rng.random() < extra % 1)
+                for j in range(1 + copies):
+                    if j:
+                        rec = {**rec, "id": f"{t['id']}~m{j}", "server": f"{t['server']}~m{j}"}
+                    d = len(self.tools)
+                    self.pos[rec["id"]] = d
+                    self.tools.append(rec)
+                    lens.append(sum(c for _, c in ws))
+                    for w, c in ws:
+                        rows.append(vocab.setdefault(w, len(vocab)))
+                        cols.append(d)
+                        # tf stored inline: (word, doc, count) triples
+                        cols.append(c)
         n = len(self.tools)
         rows = np.array(rows, np.int32)
         dc = np.array(cols, np.int32).reshape(-1, 2)
@@ -92,7 +107,8 @@ class Catalog:
         self.cap = DF_CAP * n
         self.norm = (BM25_K1 * (1 - BM25_B + BM25_B * self.dl / self.dl.mean())).astype(np.float32)
         self.n = n
-        self.emb = np.load(EMB / "tools.npy", mmap_mode="r") if (EMB / "tools.npy").exists() else None
+        # tools.npy is aligned with the full catalog's order; a resized catalog runs BM25-only
+        self.emb = np.load(EMB / "tools.npy", mmap_mode="r") if (EMB / "tools.npy").exists() and not size else None
         print(f"catalog: {n:,} tools, {len(vocab):,} words, {len(self.post_doc):,} postings, {time.time() - t0:.0f}s",
               flush=True)
 
@@ -347,6 +363,7 @@ CAT = None
 
 def work(job):
     ex, k, session_only, ctx = job
+    t0 = time.perf_counter()
     docs, bm, emb = candidates(CAT, ex, k, session_only, ctx)
     if not len(docs):
         return None
@@ -355,7 +372,7 @@ def work(job):
     later = {CAT.pos[t] for t, _ in ex["future"]}
     # relevance: 2 = the very next call, 1 = called later in the task, 0 = never
     y = np.array([2 if d == nxt else 1 if d in later else 0 for d in docs], np.int8)
-    return X, y, docs, int((y > 0).any())
+    return X, y, docs, int((y > 0).any()), (time.perf_counter() - t0) * 1000
 
 
 def build(examples, k, session_only, workers, ctx=None):
@@ -381,15 +398,17 @@ def top1(model, res, examples):
         if r is None:
             out.append(None)
             continue
-        X, y, docs, hit = r
-        s = model.predict(X)
+        X, y, docs, hit, ms = r
+        t0 = time.perf_counter()
+        s = model.predict(X, num_threads=1)
         i = int(np.argmax(s))
         srt = np.sort(s)[::-1]
         t = CAT.tools[docs[i]]
         args, req, got, low = fill(t, context_values(ex))
         right = y[i] > 0 and any(t["id"] == tid and same_args(args, a) for tid, a in ex["future"])
         g = [srt[0], srt[0] - (srt[1] if len(srt) > 1 else 0), low, got / req if req else 1.0, len(args), *X[i]]
-        out.append((g, bool(y[i] > 0), bool(right), hit))
+        # ms: retrieve + featurize + rank + fill, one thread (labeling included; it is a few set lookups)
+        out.append((g, bool(y[i] > 0), bool(right), hit, ms + (time.perf_counter() - t0) * 1000))
     return out
 
 
@@ -402,7 +421,9 @@ def report(name, t, gate, th):
     tt = [x for x in t if x is not None]
     p = gate.predict(gate_X(tt))
     rows = {"examples": n, "retrieved": round(sum(x[3] for x in tt) / n, 4),
-            "tool_top1": round(sum(x[1] for x in tt) / n, 4), "call_top1": round(sum(x[2] for x in tt) / n, 4)}
+            "tool_top1": round(sum(x[1] for x in tt) / n, 4), "call_top1": round(sum(x[2] for x in tt) / n, 4),
+            "ms_p50": round(float(np.percentile([x[4] for x in tt], 50)), 2),
+            "ms_p99": round(float(np.percentile([x[4] for x in tt], 99)), 2)}
     for target, thr in th.items():
         fire = p >= thr
         right = np.array([x[2] for x in tt])
@@ -424,8 +445,9 @@ def thresholds(p, right, targets=(0.5, 0.6, 0.7, 0.8, 0.9)):
     return out
 
 
-def load(split, limit=None, seed=0):
-    xs = [json.loads(line) for line in open(EXAMPLES) if f'"split": "{split}"' in line]
+def load(split, limit=None, seed=0, sources=SOURCES):
+    xs = [json.loads(line) for src in sources for line in open(ROOT / f"data/calls/{src}.jsonl")
+          if f'"split": "{split}"' in line]
     # every call still to come in the same trajectory: a prefetch pays off if the agent makes it at any later step
     calls = collections.defaultdict(list)
     for x in xs:
@@ -444,27 +466,33 @@ def ctx_for(split, examples):
         return None
     m = json.load(open(EMB / f"ctx_{split}.json"))  # example key -> row
     arr = np.load(p, mmap_mode="r")
-    return [np.asarray(arr[m[f"{ex['conv']}:{len(ex['prior'])}"]]) for ex in examples]
+    return [np.asarray(arr[m[f"{ex['src']}:{ex['conv']}:{len(ex['prior'])}"]]) for ex in examples]
 
 
 def run(a):
     global CAT
     OUT.mkdir(parents=True, exist_ok=True)
-    CAT = Catalog()
     global SLOT
-    tr, dv, te = load("train", a.train), load("dev", a.dev), load("test", a.test)
+    tr, dv = load("train", a.train), load("dev", a.dev)
+    # test per source: ToolBench (multi-step, real results) stays comparable with earlier runs
+    tests = {f"test_{src}": load("test", a.test, sources=(src,)) for src in SOURCES}
+    keep = {t for xs in (tr, dv, *tests.values()) for x in xs for t in (*x["session"], x["tool"], *(f for f, _ in x["future"]))}
+    CAT = Catalog(size=a.size, keep=keep)
     SLOT = train_slots(CAT, tr, a.workers)
-    SLOT.save_model(str(OUT / "slots.txt"))
+    if not a.size:  # the committed models are the full-catalog ones
+        SLOT.save_model(str(OUT / "slots.txt"))
     summary = {"config": vars(a), "catalog_tools": CAT.n, "embeddings": CAT.emb is not None}
     for setting, session_only in (("session", True), ("catalog", False)):
+        if setting not in a.settings:
+            continue
         t0 = time.time()
         R = {s: build(xs, a.k, session_only, a.workers, None if session_only else ctx_for(s, xs))
-             for s, xs in (("train", tr), ("dev", dv), ("test", te))}
+             for s, xs in (("train", tr), ("dev", dv), *tests.items())}
         X, y, g, _ = stack(R["train"])
         ranker = lgb.train({"objective": "lambdarank", "metric": "ndcg", "ndcg_eval_at": [1], "learning_rate": 0.05,
                             "num_leaves": 63, "min_data_in_leaf": 50, "verbose": -1, "num_threads": a.workers},
                            lgb.Dataset(X, y, group=g, feature_name=FEATS), 400)
-        dt, tt = top1(ranker, R["dev"], dv), top1(ranker, R["test"], te)
+        dt = top1(ranker, R["dev"], dv)
         keep = [i for i, x in enumerate(dt) if x is not None]
         dk = [dt[i] for i in keep]
         GX, Gy = gate_X(dk), np.array([x[2] for x in dk], np.int8)
@@ -478,12 +506,14 @@ def run(a):
             oof[fold == f] = lgb.train(gp, lgb.Dataset(GX[fold != f], Gy[fold != f]), 300).predict(GX[fold == f])
         th = thresholds(oof, Gy.astype(np.float32))
         gate = lgb.train(gp, lgb.Dataset(GX, Gy), 300)
-        summary[setting] = {"dev": report(f"{setting} dev ", dt, gate, th), "test": report(f"{setting} test", tt, gate, th),
+        summary[setting] = {"dev": report(f"{setting} dev ", dt, gate, th),
+                            **{k: report(f"{setting} {k}", top1(ranker, R[k], xs), gate, th) for k, xs in tests.items()},
                             "seconds": round(time.time() - t0),
                             "ranker_gain": dict(zip(FEATS, map(float, ranker.feature_importance("gain").round(1))))}
-        ranker.save_model(str(OUT / f"ranker_{setting}.txt"))
-        gate.save_model(str(OUT / f"gate_{setting}.txt"))
-    tag = "emb" if CAT.emb is not None else "bm25"
+        if not a.size:
+            ranker.save_model(str(OUT / f"ranker_{setting}.txt"))
+            gate.save_model(str(OUT / f"gate_{setting}.txt"))
+    tag = ("emb" if CAT.emb is not None else "bm25") + (f"_n{CAT.n}" if a.size else "")
     json.dump(summary, open(OUT / f"run_{tag}_k{a.k}.json", "w"), indent=1)
 
 
@@ -495,6 +525,8 @@ if __name__ == "__main__":
     ap.add_argument("--test", type=int, default=0, help="0 = every test example")
     ap.add_argument("--k", type=int, default=50)
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--size", type=int, help="resize the catalog to this many tools (see Catalog)")
+    ap.add_argument("--settings", default="session,catalog")
     a = ap.parse_args()
     a.test = a.test or None
     run(a)

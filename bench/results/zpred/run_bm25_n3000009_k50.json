@@ -1,0 +1,103 @@
+{
+ "config": {
+  "cmd": "run",
+  "train": 30000,
+  "dev": 8000,
+  "test": null,
+  "k": 50,
+  "workers": 8,
+  "size": 3000000,
+  "settings": "catalog"
+ },
+ "catalog_tools": 3000009,
+ "embeddings": false,
+ "catalog": {
+  "dev": {
+   "examples": 8000,
+   "retrieved": 0.5192,
+   "tool_top1": 0.2039,
+   "call_top1": 0.1099,
+   "ms_p50": 39.98,
+   "ms_p99": 140.2,
+   "@0.5": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.6": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.7": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "test": {
+   "examples": 18549,
+   "retrieved": 0.6032,
+   "tool_top1": 0.2387,
+   "call_top1": 0.1184,
+   "ms_p50": 38.16,
+   "ms_p99": 75.85,
+   "@0.5": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.6": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.7": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "seconds": 366,
+  "ranker_gain": {
+   "bm25": 45825.3,
+   "rank": 78999.3,
+   "rel_top": 64230.1,
+   "gap_next": 22687.8,
+   "same_server_last": 4343.4,
+   "server_seen": 421190.3,
+   "called_before": 9704.7,
+   "is_last_tool": 1758.8,
+   "q_name_overlap": 46193.2,
+   "q_server_overlap": 62005.8,
+   "n_args": 18311.7,
+   "n_req": 10037.5,
+   "req_fillable": 3692.6,
+   "n_key_hits": 16910.9,
+   "n_prior": 164729.0,
+   "emb_cos": 0.0,
+   "emb_rank": 0.0,
+   "session": 0.0
+  }
+ }
+}
