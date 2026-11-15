@@ -1,0 +1,182 @@
+{
+ "config": {
+  "cmd": "run",
+  "train": 30000,
+  "dev": 8000,
+  "test": null,
+  "k": 50,
+  "workers": 8
+ },
+ "catalog_tools": 1003622,
+ "embeddings": false,
+ "session": {
+  "dev": {
+   "examples": 8000,
+   "retrieved": 0.9263,
+   "tool_top1": 0.4744,
+   "call_top1": 0.2799,
+   "@0.5": {
+    "threshold": 0.104,
+    "coverage": 0.5154,
+    "precision": 0.5423
+   },
+   "@0.6": {
+    "threshold": 0.4583,
+    "coverage": 0.295,
+    "precision": 0.8542
+   },
+   "@0.7": {
+    "threshold": 0.8975,
+    "coverage": 0.0224,
+    "precision": 1.0
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "test": {
+   "examples": 18549,
+   "retrieved": 0.9562,
+   "tool_top1": 0.5214,
+   "call_top1": 0.2982,
+   "@0.5": {
+    "threshold": 0.104,
+    "coverage": 0.5453,
+    "precision": 0.4897
+   },
+   "@0.6": {
+    "threshold": 0.4583,
+    "coverage": 0.2581,
+    "precision": 0.6123
+   },
+   "@0.7": {
+    "threshold": 0.8975,
+    "coverage": 0.0046,
+    "precision": 0.814
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "seconds": 176,
+  "ranker_gain": {
+   "bm25": 39955.0,
+   "rank": 38740.9,
+   "rel_top": 23283.5,
+   "gap_next": 44646.3,
+   "same_server_last": 2771.9,
+   "server_seen": 5639.3,
+   "called_before": 28477.1,
+   "is_last_tool": 3547.7,
+   "q_name_overlap": 68692.6,
+   "q_server_overlap": 10026.3,
+   "n_args": 16816.7,
+   "n_req": 10721.9,
+   "req_fillable": 4219.4,
+   "n_key_hits": 5270.4,
+   "n_prior": 15545.9,
+   "emb_cos": 0.0,
+   "emb_rank": 0.0,
+   "session": 0.0
+  }
+ },
+ "catalog": {
+  "dev": {
+   "examples": 8000,
+   "retrieved": 0.6489,
+   "tool_top1": 0.2732,
+   "call_top1": 0.1566,
+   "@0.5": {
+    "threshold": 0.5936,
+    "coverage": 0.0901,
+    "precision": 0.9584
+   },
+   "@0.6": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.7": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "test": {
+   "examples": 18549,
+   "retrieved": 0.7116,
+   "tool_top1": 0.3143,
+   "call_top1": 0.1556,
+   "@0.5": {
+    "threshold": 0.5936,
+    "coverage": 0.0254,
+    "precision": 0.5381
+   },
+   "@0.6": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.7": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "seconds": 196,
+  "ranker_gain": {
+   "bm25": 52703.1,
+   "rank": 500673.9,
+   "rel_top": 74120.2,
+   "gap_next": 61807.3,
+   "same_server_last": 20696.1,
+   "server_seen": 284516.2,
+   "called_before": 13744.1,
+   "is_last_tool": 4841.7,
+   "q_name_overlap": 97407.6,
+   "q_server_overlap": 70355.5,
+   "n_args": 22779.0,
+   "n_req": 13446.3,
+   "req_fillable": 4573.5,
+   "n_key_hits": 14323.3,
+   "n_prior": 52857.0,
+   "emb_cos": 0.0,
+   "emb_rank": 0.0,
+   "session": 0.0
+  }
+ }
+}
