@@ -6,6 +6,50 @@ Built on [QM](https://github.com/yc-software/qm) (agent harness) and [Native](ht
 
 **Honest summary.** All numbers below come from my own benchmarks (simulated skills and a simulated business help desk, 10-54 runs per comparison), not production traffic. When the predictor guesses, it is right ~94% of the time; it guesses for about two-thirds of lookups. Prediction alone made turns ~20% faster (9.5s -> 7.4s median). The bigger wins (e.g. 27.7s -> 9.5s) come from the full stack, which adds a fast answer path, thinking off, and tool pruning. On one-off requests, or when tools already take milliseconds, prediction alone does little.
 
+## v3: one predictor for a million tools, specialized per user (2026-11-17)
+
+Everything below v3 trains on each domain's own transcripts. v3 asks the harder question: can one model, trained
+once on public data, predict calls on an API it has never seen, out of a million-tool catalog, and then specialize
+to a user from a handful of their sessions?
+
+- **Base model** (`bench/zpred.py`): BM25 + server-level retrieval over the 1M catalog, a LightGBM lambdarank ranker
+  for the tool, a LightGBM slot model for each argument's value (from the request and earlier results, JSON lists
+  included), an include model for optional arguments, and joint (tool x argument set) speculation. Trained on
+  ToolBench + ToolACE + multi-turn customer-service transcripts (`bench/calls.py taumt`: tau2-bench airline and
+  telecom, tau-bench airline, APIGen-MT-5k airline). **tau-bench retail is left out of every source.**
+- **Post-training** (`bench/zadapt.py`, `bench/ztau.py`): from a user's past sessions, call-transition counts and
+  frequent values, plus 50 extra boosting rounds on the ranker, slot and include models. 25 sessions take ~5 s on a
+  CPU. A "user" here is the deployment: the same agent's sessions with *other* customers (two customer folds,
+  `results/ztau/folds.json`), so no customer is predicted by a model that saw their own sessions.
+
+**Offline, tau-bench retail test customers** (replaying the baseline agent's 110 sessions, gate P >= 0.2):
+
+| | lookups ready before the agent asks | attached to its context | precision of attached |
+|---|---|---|---|
+| Zero-shot (no user data) | 51% | 0% (never confident enough) | - |
+| After 25 sessions | 81% | 59% | 93% |
+
+**Live A/B** (solo mode, Claude Haiku 4.5, tools ~0.8 s, same tasks and baseline as `ab3_*` below;
+`results/ztau/summary.json`):
+
+| | agent tool calls | turns | input tokens | time | correct (vs baseline) |
+|---|---|---|---|---|---|
+| v3, run 1 | -41% | -36% | -22% | -15% | 76 vs 78 |
+| v3, run 2 | -39% | -34% | -19% | -10% | 81 vs 77 |
+| v2 (no distinct-value fix) | -39% | -34% | -17% | -10% | 83 vs 78 |
+| domain-trained (`ab3`, below) | -50% | -44% | -29% | -8% | 79 vs 74 |
+
+Pooled over the two v3 runs, accuracy moves +0.9 points; the one-sided 95% lower bound (-5.3) does not certify the
+-3-point non-inferiority margin, and identical baseline runs disagree on 5-10 tasks, so read it as "unchanged within
+noise", not as a gain. Cost: -6% and -3%.
+
+**ToolBench, held-out APIs** (`bench/zeval.py`, `results/zpred/eval_toolbench.json`, 18,549 calls, one of 3
+prefetched calls is an exact later call): 48.8% with the session's tools known, 31.6% from the full 1M catalog.
+
+Limits: the 25-session history and the 0.2 gate were picked on an offline replay of the same test customers' baseline
+sessions; the live runs are separate and cross-fit. A zero-shot live run is not done yet. The live transcripts are
+not committed (`*.jsonl`), only their summary.
+
 ## v2: learned predictor on real chat transcripts (2026-11-05)
 
 The hand-learned rule table is replaced by a learned model (`bench/gpred.py`), chosen after a literature review (`reports/Agent tool call prediction.md`):

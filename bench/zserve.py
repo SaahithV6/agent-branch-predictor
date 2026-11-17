@@ -22,6 +22,7 @@ class Predictor:
     def __init__(self, target=None, out=Z.OUT):
         Z.CAT = Z.Catalog(emb=False)
         Z.SLOT = lgb.Booster(model_file=str(out / "slots.txt"))
+        Z.INC = lgb.Booster(model_file=str(out / "include.txt"))
         self.m = {}
         for setting in ("session", "catalog"):
             cfg = Z.json.load(open(out / f"gate_{setting}.json"))
@@ -36,7 +37,8 @@ class Predictor:
         t0 = time.perf_counter()
         setting = "session" if session else "catalog"
         ranker, gate, th, cfg = self.m[setting]
-        ex = {"query": query, "prior": list(prior), "session": list(session or ())}
+        Z.TEMP = cfg.get("temp", 1.0)
+        ex ={"query": query, "prior": list(prior), "session": list(session or ())}
         docs, bm, emb = Z.candidates(Z.CAT, ex, cfg["k"], bool(session))
         if not len(docs):
             return {"p": 0.0, "fire": False, "calls": [], "ms": 0.0}

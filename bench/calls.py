@@ -5,10 +5,11 @@ Each example is one real call and what came before it: the user's request, the c
 here can be asked to pick the next call out of the whole catalog, and test splits can hold out
 whole servers (APIs) the model has never seen called.
 
-    python3 -I bench/calls.py toolbench    -> data/calls/toolbench.jsonl
+    python3 -I bench/calls.py toolbench    -> data/calls/toolbench.jsonl   (also: toolace, taumt)
 """
 
 import ast
+import collections
 import json
 import re
 import sys
@@ -230,7 +231,78 @@ def toolace():
     return n
 
 
+def taumt():
+    """Real multi-turn customer-service transcripts: tau2-bench airline + telecom (4 agent models) and tau-bench's
+    airline transcripts, plus APIGen-MT-5k's airline dialogs (Salesforce). tau's *retail* domain is left out of
+    every source: it is the held-out deployment bench/ztau.py tests on. Split by customer (telecom: by task)."""
+    sys.path.insert(0, str(ROOT / "bench"))
+    import traces
+    tools, n = {}, collections.Counter()
+    out = open(DATA / "taumt.jsonl", "w")
+
+    def tool(dom, name, args, desc="", req=None):
+        tid = f"tau/{dom}/{name}"
+        t = tools.setdefault(tid, {"source": "taumt", "server": dom, "name": name, "read": name in traces.READ[dom],
+                                   "args": [], "desc": desc, "id": tid})
+        have = {a["name"] for a in t["args"]}
+        t["args"] += [{"name": k, "type": v, "required": req is None or k in req} for k, v in args.items() if k not in have]
+        t["desc"] = t["desc"] or desc
+        return tid
+
+    def emit(dom, group, conv, steps):
+        """steps: [(customer text so far, name, args, result)]"""
+        sp = zlib.crc32(group.encode()) % 10
+        split = "test" if sp == 0 else "dev" if sp == 1 else "train"
+        session = sorted(t for t in tools if t.startswith(f"tau/{dom}/"))
+        prior = []
+        for text, name, args, result in steps:
+            tid = f"tau/{dom}/{name}"
+            out.write(json.dumps({"src": "taumt", "conv": zlib.crc32(conv.encode()), "split": split, "query": text.strip(),
+                                  "session": session, "prior": list(prior), "tool": tid, "args": args}) + "\n")
+            r = result if isinstance(result, str) else json.dumps(result)
+            prior.append({"tool": tid, "args": args, "result": r[:RESULT_CHARS]})
+            n[f"{dom}_calls"] += 1
+
+    ty = lambda v: "integer" if isinstance(v, int) and not isinstance(v, bool) else "number" if isinstance(v, float) else \
+        "boolean" if isinstance(v, bool) else "array" if isinstance(v, list) else "object" if isinstance(v, dict) else "string"  # noqa: E731
+    apigen = [x for x in json.load(open(DATA / "Salesforce_APIGen-MT-5k_apigen-mt_5k.json")) if "Airline" in x["system"][:40]]
+    for f in json.loads(apigen[0]["tools"]):
+        p = f.get("parameters") or {}
+        tool("airline", f["name"], {k: v.get("type", "string") for k, v in (p.get("properties") or {}).items()},
+             f.get("description", "")[:1000], set(p.get("required") or []))
+    trs = [t for d in ("airline", "telecom") for t in traces.load(d)]
+    for t in trs:
+        for st in t["steps"]:
+            tool(t["domain"], st["name"], {k: ty(v) for k, v in st["args"].items()})
+    for t in trs:
+        emit(t["domain"], t["group"], f"{t['source']}:{t['model']}:{t['group']}:{id(t)}",
+             [(s["text"], s["name"], s["args"], s["result"]) for s in t["steps"] if s["name"] != "think"])
+        n[t["source"] + "_" + t["domain"]] += 1
+    for i, x in enumerate(apigen):
+        text, steps, conv = "", [], x["conversations"]
+        for j, m in enumerate(conv):
+            if m["from"] == "human":
+                text += "\n" + m["value"]
+            if m["from"] == "function_call":
+                c = json.loads(m["value"])
+                if isinstance(c.get("arguments"), str):  # some dialogs encode the arguments twice
+                    c["arguments"] = json.loads(c["arguments"] or "{}")
+                res = conv[j + 1]["value"] if j + 1 < len(conv) and conv[j + 1]["from"] == "observation" else ""
+                if c["name"] != "think":
+                    tool("airline", c["name"], {k: ty(v) for k, v in (c.get("arguments") or {}).items()})
+                    steps.append((text, c["name"], c.get("arguments") or {}, res))
+        user = next((a["user_id"] for _, _, a, _ in steps if "user_id" in a), f"apigen{i}")
+        emit("airline", f"airline:{user}", f"apigen{i}", steps)
+        n["apigen_airline"] += 1
+    out.close()
+    with open(DATA / "tools_taumt.jsonl", "w") as f:
+        for t in tools.values():
+            f.write(json.dumps(t) + "\n")
+    n["tools"] = len(tools)
+    return dict(n)
+
+
 if __name__ == "__main__":
     assert py_calls('[A B(x="a, (b)", y=2), C(), D(z=[1, 2], w=true)]') == [("A B", {"x": "a, (b)", "y": 2}), ("C", {}),
                                                                          ("D", {"z": [1, 2], "w": True})]
-    print({"toolbench": toolbench, "toolace": toolace}[sys.argv[1]]())
+    print({"toolbench": toolbench, "toolace": toolace, "taumt": taumt}[sys.argv[1]]())

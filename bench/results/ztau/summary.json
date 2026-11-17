@@ -1,0 +1,83 @@
+{
+ "setup": "tau-bench retail test, solo mode, Claude Haiku 4.5, tools ~0.8 s, PREFETCH_WAIT=4, ATTACH_MIN=0.2; baseline ab3_base (no prediction). Post-training: 25 sessions of the same agent from the other customer fold (folds.json); no customer is predicted by a model that saw its own sessions. Changes are paired means, prediction vs baseline.",
+ "runs": {
+  "v1 (ToolBench+ToolACE base, 25 sessions, 3 guesses)": {
+   "file": "ab_zpred_v1_h25",
+   "paired_tasks": 107,
+   "correct": [
+    83,
+    76
+   ],
+   "noninferiority_lower_bound_pts": -0.8,
+   "pct_change": {
+    "agent_tool_calls": -20.1,
+    "turns": -17.7,
+    "input_tokens": -10.6,
+    "output_tokens": -9.0,
+    "seconds": -12.2,
+    "cost": -1.2
+   }
+  },
+  "v2 (+ airline/telecom transcripts, 8 guesses)": {
+   "file": "ab_zpred_v2_h25",
+   "paired_tasks": 110,
+   "correct": [
+    83,
+    78
+   ],
+   "noninferiority_lower_bound_pts": -2.9,
+   "pct_change": {
+    "agent_tool_calls": -38.6,
+    "turns": -34.0,
+    "input_tokens": -16.7,
+    "output_tokens": -10.4,
+    "seconds": -10.0,
+    "cost": -5.1
+   }
+  },
+  "v3 run 1 (+ distinct values per argument)": {
+   "file": "ab_zpred_v3_run1",
+   "paired_tasks": 110,
+   "correct": [
+    76,
+    78
+   ],
+   "noninferiority_lower_bound_pts": -9.2,
+   "pct_change": {
+    "agent_tool_calls": -40.6,
+    "turns": -35.8,
+    "input_tokens": -21.8,
+    "output_tokens": -12.1,
+    "seconds": -15.2,
+    "cost": -6.3
+   }
+  },
+  "v3 run 2": {
+   "file": "ab_zpred_v3_run2",
+   "paired_tasks": 109,
+   "correct": [
+    81,
+    77
+   ],
+   "noninferiority_lower_bound_pts": -3.1,
+   "pct_change": {
+    "agent_tool_calls": -39.1,
+    "turns": -34.4,
+    "input_tokens": -19.3,
+    "output_tokens": -5.3,
+    "seconds": -9.9,
+    "cost": -2.8
+   }
+  }
+ },
+ "offline_replay_v3": {
+  "zero_shot": {
+   "ready": 0.5064
+  },
+  "after_25_sessions_gate_0.2": {
+   "attached": 0.593,
+   "precision": 0.9333,
+   "ready": 0.8103
+  }
+ }
+}

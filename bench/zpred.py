@@ -36,8 +36,9 @@ from toolindex import tokens as name_tokens  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 CATALOGS = [ROOT / "data/catalogs/tools_1m.jsonl", ROOT / "data/calls/tools_toolbench_traj.jsonl",
-            ROOT / "data/calls/tools_toolace.jsonl"]
-SOURCES = ("toolbench", "toolace")  # bench/calls.py <source> -> data/calls/<source>.jsonl
+            ROOT / "data/calls/tools_toolace.jsonl", ROOT / "data/calls/tools_taumt.jsonl"]
+SOURCES = ("toolbench", "toolace", "taumt")  # bench/calls.py <source> -> data/calls/<source>.jsonl
+WHOLE = ("taumt",)  # small sources: every example is used, never sampled down with the big ones
 OUT = ROOT / "bench/results/zpred"
 EMB = ROOT / "data/calls/emb"  # optional: tools.npy (aligned with catalog order) + ctx_<split>.npy (aligned with examples)
 
@@ -119,6 +120,23 @@ class Catalog:
             for w in set(words(" ".join(name_tokens(sv)))):
                 self.server_words[w].append(i)
         self.server_idf = {w: math.log(1 + len(self.servers) / len(v)) for w, v in self.server_words.items()}
+        # server-level BM25: a server's document is every word of its tools (tf log-damped), so a request that
+        # describes what an API does, not what one endpoint is called, still finds the server
+        ns = len(self.servers)
+        srv = np.empty(n, np.int64)
+        for i, sv in enumerate(self.servers):
+            srv[self.by_server[sv]] = i
+        self.srv = srv
+        key = np.repeat(np.arange(len(vocab), dtype=np.int64), np.diff(self.ptr)) * ns + srv[self.post_doc]
+        uk, inv = np.unique(key, return_inverse=True)
+        self.s_doc = (uk % ns).astype(np.int32)
+        self.s_tf = np.log1p(np.bincount(inv, weights=self.post_tf)).astype(np.float32)
+        self.s_ptr = np.searchsorted(uk // ns, np.arange(len(vocab) + 1))
+        sdl = np.bincount(self.s_doc, weights=self.s_tf, minlength=ns)
+        sdf = np.diff(self.s_ptr)
+        self.s_idf = np.log(1 + (ns - sdf + 0.5) / (sdf + 0.5)).astype(np.float32)
+        self.s_norm = (BM25_K1 * (1 - BM25_B + BM25_B * sdl / sdl.mean())).astype(np.float32)
+        del key, uk, inv
         # tools.npy is aligned with the full catalog's order; a resized catalog runs BM25-only
         # float32 in RAM (1 GB at 1M x 256): numpy has no float16 BLAS, a float16 mat-vec is ~10x slower
         self.emb = np.load(EMB / "tools.npy").astype(np.float32) if emb and (EMB / "tools.npy").exists() and not size else None
@@ -149,6 +167,17 @@ class Catalog:
             sc[d] += self.idf[v] * tf * (BM25_K1 + 1) / (tf + self.norm[d])
         return sc
 
+    def server_bm25(self, qwords):
+        """Scores for every server."""
+        sc = np.zeros(len(self.servers), np.float32)
+        for v in {self.vocab[w] for w in qwords if w in self.vocab}:
+            s, e = self.s_ptr[v], self.s_ptr[v + 1]
+            if e - s > DF_CAP * len(self.servers):
+                continue
+            d, tf = self.s_doc[s:e], self.s_tf[s:e]
+            sc[d] += self.s_idf[v] * tf * (BM25_K1 + 1) / (tf + self.s_norm[d])
+        return sc
+
 
 # ---------------------------------------------------------------------------------- context values
 KV = re.compile(r"""['"]([A-Za-z_][\w\-]{0,40})['"]\s*:\s*(?:['"]([^'"]{1,120})['"]|(-?\d+(?:\.\d+)?)|(True|False|true|false))""")
@@ -159,7 +188,7 @@ URL = re.compile(r"https?://\S+")
 CAPS = re.compile(r"\b[A-Z][a-zA-Z0-9]+(?:\s+[A-Z][a-zA-Z0-9]+)*")
 
 
-CODE = re.compile(r"(?<![\w-])(?=[\w-]*\d)(?=[\w-]*[A-Za-z])[\w-]{5,}(?![\w-])")  # mixed letters+digits: ids, VINs, hashes
+CODE = re.compile(r"(?<![\w#-])#?(?=[\w-]*\d)(?=[\w-]*[A-Za-z])[\w-]{5,}(?![\w-])")  # mixed letters+digits: ids, VINs, hashes
 PHRASE = re.compile(r"\b(?:for|about|called|named|titled|of|on)\s+([a-z][\w']*(?:\s+[a-z][\w']*){0,3}?)(?=[,.?!;]|\s(?:and|in|with|from|to|by|at)\b|$)")
 OPENERS = STOP | {"please", "additionally", "furthermore", "moreover", "also", "then", "next", "finally", "help", "hey", "hi",
                   "thanks", "could", "can", "i'm", "im", "let", "tell", "show", "find", "fetch", "check"}
@@ -170,6 +199,15 @@ EXAMPLES_DOC = ROOT / "data/calls/tool_examples.json"
 TOOL_EXAMPLES = json.load(open(EXAMPLES_DOC)) if EXAMPLES_DOC.exists() else {}
 ARGCATS = ["id", "url", "email", "name", "query", "q", "term", "keyword", "search", "city", "country", "date", "lang",
            "language", "limit", "page", "symbol", "code", "type", "category", "user", "username", "title", "text"]
+
+
+def json_scalars(obj, key):
+    """(key, value) for list items and a bare scalar: the values KV misses. A bare result is keyed by its tool name."""
+    if isinstance(obj, dict):
+        return [kv for k, v in obj.items() for kv in json_scalars(v, k) if isinstance(v, (dict, list))]
+    if isinstance(obj, list):
+        return [kv for v in obj for kv in json_scalars(v, key)]
+    return [] if obj is None else [(key, str(obj))]
 
 
 def context_values(ex):
@@ -206,6 +244,12 @@ def context_values(ex):
         for m in KV.finditer(p["result"]):
             v = m.group(2) or m.group(3) or m.group(4)
             out.append((v, frozenset(name_tokens(m.group(1)) | {m.group(1).lower()}), "result", frozenset(), rec))
+        try:  # JSON results: list items and a bare scalar result carry no "key": "value" pair for KV to find
+            obj = json.loads(p["result"])
+        except ValueError:
+            obj = None
+        for k, v in json_scalars(obj, p["tool"].rsplit("/", 1)[-1])[:200]:
+            out.append((v, frozenset(name_tokens(k) | {k.lower()}), "result", frozenset(), rec))
         for k, v in p["args"].items():  # what was passed before is often passed again
             if not isinstance(v, (dict, list)):
                 out.append((str(v), frozenset(name_tokens(k) | {k.lower()}), "args", frozenset(), rec))
@@ -253,29 +297,68 @@ def with_examples(tool, values):
     return values + [(v, frozenset(name_tokens(k) | {k.lower()}), "example", frozenset(), 0) for k, v in ex.items()]
 
 
-def fill(tool, values, slot=None):
-    """Arguments for this tool from context values -> (args, n required, n required filled, min filled score)."""
+# whether the agent passes an argument at all: "required" in a schema is a weak hint (agents skip required args
+# and pass optional ones), so it is learned
+INC_FEATS = ["required", "t_num", "t_bool", "n_args", "arg_idx", "has_example", "best", "second", "n_vals",
+             "best_key_hit", *[f"b_{k}" for k in KINDS], *[f"a_{c}" for c in ARGCATS]]
+INC = None  # LightGBM include model, trained with SLOT
+VALS = 3  # candidate values kept per argument; a fan-out (open every order) needs as many as are prefetched
+
+
+def arg_options(tool, values, slot=None, inc=True):
+    """Per argument (name, P(passed), [(value, P(right | passed))] best 3), and the include-model rows."""
     slot = slot or SLOT
-    args, req, got, low = {}, 0, 0, 1.0
     values = with_examples(tool, values)
-    for a in tool["args"]:
-        req += bool(a.get("required"))
-        if not values:
-            continue
-        R = np.array(slot_rows(a, values), np.float32)
-        R[:, SLOT_FEATS.index("n_args")] = len(tool["args"])
-        sc = slot.predict(R)
-        i = int(np.argmax(sc))
-        if sc[i] >= (0.05 if a.get("required") else 0.8):  # optional args only on strong evidence (grid on dev)
-            args[a["name"]] = values[i][0]
-            got += bool(a.get("required"))
-            low = min(low, float(sc[i]))
-    return args, req, got, low
+    ex_keys = TOOL_EXAMPLES.get(tool["id"], {})
+    out, rows = [], []
+    for j, a in enumerate(tool["args"]):
+        sc, o = np.zeros(0), []
+        if values:
+            R = np.array(slot_rows(a, values), np.float32)
+            R[:, SLOT_FEATS.index("n_args")] = len(tool["args"])
+            sc = slot.predict(R, num_threads=1)
+            o, got = [], set()
+            for i in np.argsort(-sc):  # best VALS *distinct* values: one value is often found under several keys
+                v = str(values[i][0]).strip().lower()
+                if v not in got:
+                    got.add(v)
+                    o.append(i)
+                    if len(o) == VALS:
+                        break
+        b = o[0] if len(o) else None
+        at = name_tokens(a["name"]) | {a["name"].lower()}
+        typ = a.get("type", "string")
+        rows.append([bool(a.get("required")), typ in ("integer", "number"), typ == "boolean", len(tool["args"]), j,
+                     a["name"] in ex_keys, sc[b] if b is not None else 0.0, sc[o[1]] if len(o) > 1 else 0.0,
+                     len(values), b is not None and bool(values[b][1] & at),
+                     *[b is not None and values[b][2] == k for k in KINDS], *[c in at for c in ARGCATS]])
+        out.append((a["name"], [(values[i][0], float(sc[i])) for i in o]))
+    if not inc:
+        return None, rows
+    pinc = INC.predict(np.array(rows, np.float32), num_threads=1) if rows else []
+    return [(n, float(p), vs) for (n, vs), p in zip(out, pinc)], rows
 
 
-def train_slots(cat, examples, workers):
+def configs(opts, m):
+    """The m most likely argument sets -> [(args, log P(all exactly right))]. Each argument is left out or passed with
+    one of its best values; the best set plus every one-change alternative to it."""
+    choice = [sorted([(math.log(max(1 - p, 1e-6)), None)] + [(math.log(max(p * v, 1e-6)), val) for val, v in vs],
+                     key=lambda c: -c[0]) for _, p, vs in opts]
+    base = sum(c[0][0] for c in choice)
+    cands = [(base, -1, 0)] + [(base - c[0][0] + c[j][0], i, j) for i, c in enumerate(choice) for j in range(1, len(c))]
+    out = []
+    for lp, i, j in sorted(cands, key=lambda c: -c[0])[:m]:
+        pick = [0] * len(choice)
+        if i >= 0:
+            pick[i] = j
+        args = {opts[k][0]: choice[k][q][1] for k, q in enumerate(pick) if choice[k][q][1] is not None}
+        out.append((args, lp))
+    return out
+
+
+def slot_data(cat, exs):
     X, y = [], []
-    for ex in examples:
+    for ex in exs:
         t = cat.tools[cat.pos[ex["tool"]]]
         vals = with_examples(t, context_values(ex))
         if not vals:
@@ -289,11 +372,30 @@ def train_slots(cat, examples, workers):
                 r[SLOT_FEATS.index("n_args")] = len(t["args"])
             X += R
             y += [str(v).strip().lower() == tgt[a["name"]] for v, *_ in vals]
-    X, y = np.array(X, np.float32), np.array(y, np.int8)
-    m = lgb.train({"objective": "binary", "learning_rate": 0.05, "num_leaves": 63, "min_data_in_leaf": 50, "verbose": -1,
-                   "num_threads": workers}, lgb.Dataset(X, y, feature_name=SLOT_FEATS), 300)
+    return np.array(X, np.float32), np.array(y, np.int8)
+
+
+def train_slots(cat, examples, workers):
+    """Slot model (which value fills an argument) and include model (is the argument passed at all)."""
+
+    def fit(X, y, feats):
+        return lgb.train({"objective": "binary", "learning_rate": 0.05, "num_leaves": 63, "min_data_in_leaf": 50,
+                          "verbose": -1, "num_threads": workers}, lgb.Dataset(X, y, feature_name=feats), 300)
+
+    X, y = slot_data(cat, examples)
+    slot = fit(X, y, SLOT_FEATS)
     print(f"slot model: {len(y):,} (arg, value) pairs, {y.mean():.3f} positive", flush=True)
-    return m
+    # include features carry slot scores from a slot model that never saw the example (2 folds)
+    halves, Xi, yi = (examples[0::2], examples[1::2]), [], []
+    for h in (0, 1):
+        m = fit(*slot_data(cat, halves[1 - h]), SLOT_FEATS)
+        for ex in halves[h]:
+            t = cat.tools[cat.pos[ex["tool"]]]
+            Xi += arg_options(t, context_values(ex), slot=m, inc=False)[1]
+            yi += [a["name"] in ex["args"] for a in t["args"]]
+    inc = fit(np.array(Xi, np.float32), np.array(yi, np.int8), INC_FEATS)
+    print(f"include model: {len(yi):,} arguments, {np.mean(yi):.3f} passed", flush=True)
+    return slot, inc
 
 
 def same_args(a, b):
@@ -304,10 +406,11 @@ def same_args(a, b):
 # ---------------------------------------------------------------------------------- features
 FEATS = ["bm25", "rank", "rel_top", "gap_next", "same_server_last", "server_seen", "called_before", "is_last_tool",
          "q_name_overlap", "q_server_overlap", "n_args", "n_req", "req_fillable", "n_key_hits", "n_prior", "emb_cos",
-         "emb_rank", "session", "server_named"]
+         "emb_rank", "session", "server_named", "srv_bm25", "srv_rank", "srv_rel_top"]
 
 
 PER_SERVER = 20  # tools taken per retrieved server, best by BM25: big servers (Azure: 1000s of ops) stay bounded
+SRV_K, SRV_TOOLS = 5, 10  # servers taken by server-level BM25, and tools from each
 
 
 def named_servers(cat, query, top=10):
@@ -328,11 +431,14 @@ def named_servers(cat, query, top=10):
 
 
 def candidates(cat, ex, k, session_only, ctx_vec=None):
-    """Candidate doc indices and their BM25 scores."""
-    q = words(ex["query"])
+    """Candidate doc indices and their BM25 scores. Also leaves the server scores in ex["_srv"] for featurize."""
+    qr = words(ex["query"])
+    q = list(qr)
     if ex["prior"]:
         last = ex["prior"][-1]
         q += words(" ".join(re.split(r"[/_]", last["tool"]))) + words(last["result"][:400])
+    ssc = cat.server_bm25(qr)
+    ex["_srv"] = ssc
     if session_only:
         docs = np.array([cat.pos[t] for t in ex["session"] if t in cat.pos], np.int64)
         return docs, cat.bm25(q, docs), None
@@ -344,12 +450,19 @@ def candidates(cat, ex, k, session_only, ctx_vec=None):
         top = np.unique(np.concatenate([np.argpartition(-sc, k)[:k], np.argpartition(-esc, k)[:k]]))
     else:
         top = np.argpartition(-sc, k)[:k]
+    parts = [top]
+    if ex["prior"]:  # a later step: the last result's words can crowd the request out of the top K
+        scr = cat.bm25(qr)
+        parts.append(np.argpartition(-scr, k // 2)[:k // 2])
     servers = {p["tool"].split("/")[1] for p in ex["prior"] if p["tool"].count("/") >= 2} | set(named_servers(cat, ex["query"]))
     for sv in servers:
         d = np.array(cat.by_server.get(sv, ()), np.int64)
         if len(d):
-            top = np.concatenate([top, d[np.argsort(-sc[d])[:PER_SERVER]]])
-    top = np.unique(top)
+            parts.append(d[np.argsort(-sc[d])[:PER_SERVER]])
+    for i in np.argpartition(-ssc, SRV_K)[:SRV_K]:  # servers whose tools, taken together, match the request
+        d = np.array(cat.by_server[cat.servers[i]], np.int64)
+        parts.append(d[np.argsort(-sc[d])[:SRV_TOOLS]])
+    top = np.unique(np.concatenate(parts))
     return top, sc[top], (esc[top] if esc is not None else None)
 
 
@@ -386,6 +499,12 @@ def featurize(cat, ex, docs, bm, emb, session_only):
     erank = np.empty(len(docs), np.int32)
     if emb is not None:
         erank[np.argsort(-emb)] = np.arange(len(docs))
+    ssc = ex["_srv"]
+    sid = cat.srv[docs]
+    cs = ssc[sid]  # each candidate's server score, and its rank among all servers
+    us, inv = np.unique(sid, return_inverse=True)
+    srank = np.array([(ssc > ssc[u]).sum() for u in us])[inv]
+    stop = float(ssc.max()) or 1.0
     rows = []
     for i, d in enumerate(docs):
         t = cat.tools[d]
@@ -395,7 +514,7 @@ def featurize(cat, ex, docs, bm, emb, session_only):
                      len(t["nt"] & qw) / (len(t["nt"]) or 1), len(t["st"] & qw) / (len(t["st"]) or 1),
                      len(t["args"]), req, frac, hits, len(ex["prior"]),
                      emb[i] if emb is not None else np.nan, erank[i] if emb is not None else -1, session_only,
-                     named.get(t["server"], 0.0)])
+                     named.get(t["server"], 0.0), cs[i], srank[i], cs[i] / stop])
     return np.array(rows, np.float32)
 
 
@@ -432,7 +551,9 @@ def stack(res):
 
 
 # ---------------------------------------------------------------------------------- train / evaluate
-SPEC = 1  # calls prefetched per prediction: the top SPEC tools, each with its arguments filled
+SPEC = 1  # calls prefetched per prediction: the SPEC most likely (tool, arguments) pairs
+TK = 5  # ranked tools whose argument sets compete for those slots
+TEMP = 1.0  # ranker score -> log P(tool) by softmax at this temperature, picked on dev
 
 
 def bucket(ex):
@@ -443,41 +564,51 @@ def bucket(ex):
 
 
 def speculate(model, X, docs, ex):
-    """Gate features and the calls to prefetch: [(row, tool, args)] for the top SPEC ranked candidates."""
+    """Gate features and the calls to prefetch: [(row, tool, args)], the SPEC most likely whole calls among the top TK
+    tools, P(call) = P(tool) * P(its argument set). One tool may take several slots with different arguments."""
     s = model.predict(X, num_threads=1)
     order = np.argsort(-s)
     srt = s[order]
+    lt = srt[:TK] / TEMP - np.logaddexp.reduce(s / TEMP)
     values = context_values(ex)
-    picks = []
-    for j, i in enumerate(order[:SPEC]):
+    pool = []
+    for j, i in enumerate(order[:TK]):
         t = CAT.tools[docs[i]]
-        args, req, got, low = fill(t, values)
-        if not j:
-            g = [srt[0], srt[0] - (srt[1] if len(srt) > 1 else 0), low, got / req if req else 1.0, len(args), *X[i],
-                 *[srt[0] - srt[m] if m < len(srt) else 9 for m in range(2, SPEC + 1)]]
-        picks.append((i, t, args))
-    return g, picks
+        for args, lp in configs(arg_options(t, values)[0], SPEC):
+            pool.append((lt[j] + lp, i, t, args, j))
+    picks = sorted(pool, key=lambda c: -c[0])[:SPEC]
+    top = picks[0]
+    g = [srt[0], srt[0] - (srt[1] if len(srt) > 1 else 0), top[0], np.logaddexp.reduce([c[0] for c in picks]),
+         len(top[3]), top[4], len({c[1] for c in picks}), *X[top[1]]]
+    return g, [(i, t, args) for _, i, t, args, _ in picks]
 
 
 def top1(model, res, examples):
     """Per example: (gate features, tool right, call right, target retrieved, ms, bucket). The prediction is the
     top SPEC ranked tools with arguments filled by the slot model; it is right if the agent makes any of those
     exact calls later on (a speculative prefetch that pays off)."""
-    out = []
-    for r, ex in zip(res, examples):
-        if r is None:
-            out.append(None)
-            continue
-        X, y, docs, hit, ms = r
-        t0 = time.perf_counter()
-        g, picks = speculate(model, X, docs, ex)
-        tool_right = right = False
-        for i, t, args in picks:
-            tool_right |= bool(y[i] > 0)
-            right |= bool(y[i] > 0) and any(t["id"] == tid and same_args(args, a) for tid, a in ex["future"])
-        # ms: retrieve + featurize + rank + fill, one thread (labeling included; it is a few set lookups)
-        out.append((g, tool_right, right, hit, ms + (time.perf_counter() - t0) * 1000, bucket(ex)))
-    return out
+    global RK
+    RK = model
+    with mp.get_context("fork").Pool(WORKERS) as pool:
+        return pool.map(_top1, list(zip(res, examples)), chunksize=64)
+
+
+RK, WORKERS = None, 8
+
+
+def _top1(job):
+    r, ex = job
+    if r is None:
+        return None
+    X, y, docs, hit, ms = r
+    t0 = time.perf_counter()
+    g, picks = speculate(RK, X, docs, ex)
+    tool_right = right = False
+    for i, t, args in picks:
+        tool_right |= bool(y[i] > 0)
+        right |= bool(y[i] > 0) and any(t["id"] == tid and same_args(args, a) for tid, a in ex["future"])
+    # ms: retrieve + featurize + rank + fill, one thread (labeling included; it is a few set lookups)
+    return g, tool_right, right, hit, ms + (time.perf_counter() - t0) * 1000, bucket(ex)
 
 
 def gate_X(t):
@@ -545,16 +676,19 @@ def ctx_for(split, examples):
 def run(a):
     global CAT
     OUT.mkdir(parents=True, exist_ok=True)
-    global SLOT, SPEC
-    SPEC = a.spec
-    tr, dv = load("train", a.train), load("dev", a.dev)
+    global SLOT, INC, SPEC, TEMP, WORKERS
+    SPEC, WORKERS = a.spec, a.workers
+    big = tuple(x for x in SOURCES if x not in WHOLE)
+    tr = load("train", a.train, sources=big) + load("train", sources=WHOLE)
+    dv = load("dev", a.dev, sources=big) + load("dev", sources=WHOLE)
     # test per source: ToolBench (multi-step, real results) stays comparable with earlier runs
     tests = {f"test_{src}": load("test", a.test, sources=(src,)) for src in SOURCES}
     keep = {t for xs in (tr, dv, *tests.values()) for x in xs for t in (*x["session"], x["tool"], *(f for f, _ in x["future"]))}
     CAT = Catalog(size=a.size, keep=keep, emb=not a.no_emb)
-    SLOT = train_slots(CAT, tr, a.workers)
+    SLOT, INC = train_slots(CAT, tr, a.workers)
     if not a.size:  # the committed models are the full-catalog ones
         SLOT.save_model(str(OUT / "slots.txt"))
+        INC.save_model(str(OUT / "include.txt"))
     summary = {"config": vars(a), "catalog_tools": CAT.n, "embeddings": CAT.emb is not None}
     for setting, session_only in (("session", True), ("catalog", False)):
         if setting not in a.settings:
@@ -566,7 +700,14 @@ def run(a):
         ranker = lgb.train({"objective": "lambdarank", "metric": "ndcg", "ndcg_eval_at": [1], "learning_rate": 0.05,
                             "num_leaves": 63, "min_data_in_leaf": 50, "verbose": -1, "num_threads": a.workers},
                            lgb.Dataset(X, y, group=g, feature_name=FEATS), 400)
-        dt = top1(ranker, R["dev"], dv)
+        best = None
+        for TEMP in (0.5, 1.0, 2.0, 4.0):  # how much tool doubt may trade against argument doubt
+            dt = top1(ranker, R["dev"], dv)
+            hit = sum(x[2] for x in dt if x is not None)
+            print(f"{setting} temp {TEMP}: dev calls right {hit / len(dv):.4f}", flush=True)
+            if best is None or hit > best[0]:
+                best = (hit, TEMP, dt)
+        _, TEMP, dt = best
         keep = [i for i, x in enumerate(dt) if x is not None]
         dk = [dt[i] for i in keep]
         GX, Gy = gate_X(dk), np.array([x[2] for x in dk], np.int8)
@@ -582,12 +723,13 @@ def run(a):
         gate = lgb.train(gp, lgb.Dataset(GX, Gy), 300)
         summary[setting] = {"dev": report(f"{setting} dev ", dt, gate, th),
                             **{k: report(f"{setting} {k}", top1(ranker, R[k], xs), gate, th) for k, xs in tests.items()},
-                            "seconds": round(time.time() - t0),
+                            "temp": TEMP, "seconds": round(time.time() - t0),
                             "ranker_gain": dict(zip(FEATS, map(float, ranker.feature_importance("gain").round(1))))}
         if not a.size:
             ranker.save_model(str(OUT / f"ranker_{setting}.txt"))
             gate.save_model(str(OUT / f"gate_{setting}.txt"))
-            json.dump({"spec": SPEC, "k": a.k, "thresholds": th}, open(OUT / f"gate_{setting}.json", "w"))
+            json.dump({"spec": SPEC, "k": a.k, "temp": TEMP, "tk": TK, "thresholds": th},
+                      open(OUT / f"gate_{setting}.json", "w"))
     tag = ("emb" if CAT.emb is not None else "bm25") + (f"_n{CAT.n}" if a.size else "") + (f"_spec{SPEC}" if SPEC > 1 else "")
     json.dump(summary, open(OUT / f"run_{tag}_k{a.k}.json", "w"), indent=1)
 

@@ -32,13 +32,22 @@ if len(sys.argv) > 3:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import tau_replay as T
     pred = json.load(open(sys.argv[3]))
-    if "vocab" in pred:  # learned predictor (lpred.py)
+    if "url" in pred:  # zero-shot 1M-tool predictor behind bench/ztau.py serve
+        import urllib.request
+
+        class ZPred:
+            def predict(self, task, results, seen, scores=True):
+                body = json.dumps({"query": task["instruction"], "prior": calls, "seen": sorted(seen)}).encode()
+                with urllib.request.urlopen(urllib.request.Request(pred["url"], body), timeout=10) as r:
+                    return [(n + json.dumps(a, sort_keys=True), p) for n, a, p in json.load(r)]
+        lp = ZPred()
+    elif "vocab" in pred:  # learned predictor (lpred.py)
         import lpred
         lp = lpred.Predictor(pred, pred["model_file"])
     else:
         lp, keep = None, {ast.literal_eval(k): tuple(v) for k, v in pred["keep"].items()}
     task = {"instruction": pred["instruction"], "lower": pred["instruction"].lower()}
-    seen, results = set(), []
+    seen, results, calls = set(), [], []  # calls: (name, args, result), what the zpred predictor reads
 from tau_tools import READ, TOOLS, WAIT, execute, key  # noqa: E402
 
 KEEP = set(json.load(open(os.environ["PRUNE"]))) if os.environ.get("PRUNE") else None  # learned field list (prune.py)
@@ -93,6 +102,7 @@ for line in sys.stdin:
         if pred and name in READ and not text.startswith("Error"):
             seen.add(k0)
             results.append((name, out))
+            calls.append((name, args, out))
             extra, deadline = [], time.time() + WAIT
             for _ in range(3):  # chain: user -> orders -> products
                 tp = time.time()
@@ -119,6 +129,7 @@ for line in sys.stdin:
                     if isinstance(r, str) and r.startswith("Error"):
                         continue
                     results.append((n, r))
+                    calls.append((n, a, r))
                     extra.append(f"{n}({json.dumps(a, separators=(',', ':'))}) -> {json.dumps(trim(n, r), separators=(',', ':'))}")
                     got += 1
                     log({"name": n, "args": a, "prefetched": True, "gate": gate, "after": me, "t": round(t1, 3), "ms": ms, "pred_ms": pred_ms})
