@@ -114,6 +114,50 @@ def predict(ex, st):
     return pool  # [(log P(call), tool id, args)], most likely first
 
 
+ROUNDS = 50  # boosting rounds added on top of each base model by post_train
+BASE = {}
+
+
+def post_train(convs):
+    """Post-train on a user's past sessions (each a list of steps: query, prior calls with results, tool, args,
+    future). Counts first: transitions, value examples, include rates. Then ROUNDS boosting rounds on the base ranker,
+    slot and include models with the same steps (CPU, seconds). Always starts again from the base models."""
+    st = stats(convs)
+    Z.TOOL_EXAMPLES = {**BASE_EXAMPLES, **{t: {**BASE_EXAMPLES.get(t, {}), **e} for t, e in st[2].items()}}
+    BASE.setdefault("slot", Z.SLOT), BASE.setdefault("inc", Z.INC), BASE.setdefault("rank", RANKERS[SESSION])
+    Z.SLOT, Z.INC, RANKERS[SESSION] = BASE["slot"], BASE["inc"], BASE["rank"]
+    exs = [x for c in convs for x in c]
+    if not exs:
+        return st
+    t0 = time.time()
+    P = {"objective": "binary", "learning_rate": 0.1, "num_leaves": 15, "min_data_in_leaf": 5, "verbose": -1, "num_threads": 8,
+         "deterministic": True, "force_row_wise": True}  # same history, same post-trained models
+    Xi, yi = [], []
+    for ex in exs:  # include rows score values with the base slot model, as zpred's do with an out-of-fold one
+        t = Z.CAT.tools[Z.CAT.pos[ex["tool"]]]
+        Xi += Z.arg_options(t, Z.context_values(ex), inc=False)[1]
+        yi += [a["name"] in ex["args"] for a in t["args"]]
+    X, y = Z.slot_data(Z.CAT, exs)
+    Z.SLOT = lgb.train(P, lgb.Dataset(X, y, feature_name=Z.SLOT_FEATS), ROUNDS, init_model=BASE["slot"])
+    Z.INC = lgb.train(P, lgb.Dataset(np.array(Xi, np.float32), np.array(yi, np.int8), feature_name=Z.INC_FEATS),
+                      ROUNDS, init_model=BASE["inc"])
+    Xr, yr, g = [], [], []
+    for ex in exs:
+        r = features(ex, st)
+        if r is None:
+            continue
+        docs, F = r
+        later = {Z.CAT.pos[t] for t, _ in ex["future"]}
+        Xr.append(F)
+        yr.append([2 if d == Z.CAT.pos[ex["tool"]] else 1 if d in later else 0 for d in docs])
+        g.append(len(docs))
+    RANKERS[SESSION] = lgb.train({**P, "objective": "lambdarank", "metric": "ndcg"},
+                                 lgb.Dataset(np.concatenate(Xr), np.concatenate(yr), group=g, feature_name=Z.FEATS),
+                                 ROUNDS, init_model=BASE["rank"])
+    print(f"post-trained on {len(convs)} sessions ({len(exs)} calls) in {time.time() - t0:.1f}s", flush=True)
+    return st
+
+
 def job(j):
     cs, h = j
     st = stats(cs[:h])

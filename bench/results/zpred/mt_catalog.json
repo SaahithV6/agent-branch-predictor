@@ -1,0 +1,83 @@
+{
+ "0": {
+  "all": {
+   "steps": 3267,
+   "tool": 0.4383,
+   "call": 0.2792
+  },
+  "airline": {
+   "steps": 1295,
+   "tool": 0.3907,
+   "call": 0.1591
+  },
+  "telecom": {
+   "steps": 1972,
+   "tool": 0.4696,
+   "call": 0.358
+  },
+  "first": {
+   "steps": 599,
+   "tool": 0.0885,
+   "call": 0.0401
+  },
+  "same": {
+   "steps": 2668,
+   "tool": 0.5169,
+   "call": 0.3328
+  }
+ },
+ "5": {
+  "all": {
+   "steps": 3267,
+   "tool": 0.7689,
+   "call": 0.5458
+  },
+  "airline": {
+   "steps": 1295,
+   "tool": 0.6255,
+   "call": 0.4571
+  },
+  "telecom": {
+   "steps": 1972,
+   "tool": 0.8631,
+   "call": 0.604
+  },
+  "first": {
+   "steps": 599,
+   "tool": 0.9833,
+   "call": 0.9599
+  },
+  "same": {
+   "steps": 2668,
+   "tool": 0.7208,
+   "call": 0.4528
+  }
+ },
+ "25": {
+  "all": {
+   "steps": 3267,
+   "tool": 0.7919,
+   "call": 0.6431
+  },
+  "airline": {
+   "steps": 1295,
+   "tool": 0.6595,
+   "call": 0.4857
+  },
+  "telecom": {
+   "steps": 1972,
+   "tool": 0.8788,
+   "call": 0.7465
+  },
+  "first": {
+   "steps": 599,
+   "tool": 0.985,
+   "call": 0.9699
+  },
+  "same": {
+   "steps": 2668,
+   "tool": 0.7485,
+   "call": 0.5697
+  }
+ }
+}

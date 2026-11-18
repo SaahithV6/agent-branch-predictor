@@ -58,59 +58,22 @@ def runs(f=None, other=False):
     return rs if f is None else [r for r in rs if (fold(r["user"]) == f) != other]
 
 
-ROUNDS = 50  # boosting rounds added on top of each base model
-BASE = {}
-
-
 def steps(hist):
-    """Sessions as training steps: request, every earlier call with its real result, the call made."""
+    """Sessions as training steps, one list per session: request, every earlier call with its real result, the call made."""
     out = []
     for r in hist:
         acts = [(n, a) for n, a in r["actions"] if n in TOOLS]
-        prior = []
+        prior, conv = [], []
         for j, (n, a) in enumerate(acts):
-            out.append({"query": r["instruction"], "prior": list(prior), "session": [], "tool": tid(n), "args": a,
-                        "future": [(tid(m), b) for m, b in acts[j:]]})
+            conv.append({"query": r["instruction"], "prior": list(prior), "session": [], "tool": tid(n), "args": a,
+                         "future": [(tid(m), b) for m, b in acts[j:]]})
             prior.append(rec(n, a))
+        out.append(conv)
     return out
 
 
 def adapt(hist):
-    """Post-train on the first h sessions. Counts (zadapt): transitions, value examples, include rates. Then a few
-    boosting rounds on the base ranker, slot and include models with the same sessions (CPU, seconds)."""
-    h = len(hist)
-    st = A.stats([[{"tool": tid(n), "args": a} for n, a in r["actions"] if n in TOOLS] for r in hist])
-    Z.TOOL_EXAMPLES = {**A.BASE_EXAMPLES, **{t: {**A.BASE_EXAMPLES.get(t, {}), **e} for t, e in st[2].items()}}
-    BASE.setdefault("slot", Z.SLOT), BASE.setdefault("inc", Z.INC), BASE.setdefault("rank", A.RANKERS[False])
-    Z.SLOT, Z.INC, A.RANKERS[False] = BASE["slot"], BASE["inc"], BASE["rank"]
-    if not h:
-        return st
-    t0, exs = time.time(), steps(hist)
-    P = {"objective": "binary", "learning_rate": 0.1, "num_leaves": 15, "min_data_in_leaf": 5, "verbose": -1, "num_threads": 8}
-    Xi, yi = [], []
-    for ex in exs:  # include rows score values with the base slot model, as zpred's do with an out-of-fold one
-        t = Z.CAT.tools[Z.CAT.pos[ex["tool"]]]
-        Xi += Z.arg_options(t, Z.context_values(ex), inc=False)[1]
-        yi += [a["name"] in ex["args"] for a in t["args"]]
-    X, y = Z.slot_data(Z.CAT, exs)
-    Z.SLOT = lgb.train(P, lgb.Dataset(X, y, feature_name=Z.SLOT_FEATS), ROUNDS, init_model=BASE["slot"])
-    Z.INC = lgb.train(P, lgb.Dataset(np.array(Xi, np.float32), np.array(yi, np.int8), feature_name=Z.INC_FEATS),
-                      ROUNDS, init_model=BASE["inc"])
-    Xr, yr, g = [], [], []
-    for ex in exs:
-        r = A.features(ex, st)
-        if r is None:
-            continue
-        docs, F = r
-        later = {Z.CAT.pos[t] for t, _ in ex["future"]}
-        Xr.append(F)
-        yr.append([2 if d == Z.CAT.pos[ex["tool"]] else 1 if d in later else 0 for d in docs])
-        g.append(len(docs))
-    A.RANKERS[False] = lgb.train({**P, "objective": "lambdarank", "metric": "ndcg"},
-                                 lgb.Dataset(np.concatenate(Xr), np.concatenate(yr), group=g, feature_name=Z.FEATS),
-                                 ROUNDS, init_model=BASE["rank"])
-    print(f"post-trained on {h} sessions ({len(exs)} calls) in {time.time() - t0:.1f}s", flush=True)
-    return st
+    return A.post_train(steps(hist))
 
 
 def predict(st, query, prior, seen, n=SPEC):

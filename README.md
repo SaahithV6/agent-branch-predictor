@@ -27,7 +27,7 @@ to a user from a handful of their sessions?
 | | lookups ready before the agent asks | attached to its context | precision of attached |
 |---|---|---|---|
 | Zero-shot (no user data) | 51% | 0% (never confident enough) | - |
-| After 25 sessions | 81% | 59% | 93% |
+| After 25 sessions | 81% | 59% | 92-94% (varies run to run) |
 
 **Live A/B** (solo mode, Claude Haiku 4.5, tools ~0.8 s, same tasks and baseline as `ab3_*` below;
 `results/ztau/summary.json`):
@@ -42,6 +42,21 @@ to a user from a handful of their sessions?
 Pooled over the two v3 runs, accuracy moves +0.9 points; the one-sided 95% lower bound (-5.3) does not certify the
 -3-point non-inferiority margin, and identical baseline runs disagree on 5-10 tasks, so read it as "unchanged within
 noise", not as a gain. Cost: -6% and -3%.
+
+**Picking the tool out of a million, on real agents** (`bench/zmt.py`, `results/zpred/mt_catalog.json`): the held-out
+test conversations of the multi-turn data (tau2 airline + telecom, 3,267 calls), the 1M catalog attached and the
+agent's tool list hidden. Each domain is one user, its conversations split in two folds; a fold is predicted after
+post-training on H conversations of the other.
+
+| history | right tool in 3 guesses | exact call in 3 | first call: tool / exact | telecom / airline (tool) |
+|---|---|---|---|---|
+| 0 (zero-shot) | 44% | 28% | 9% / 4% | 47% / 39% |
+| 5 sessions | 77% | 55% | 98% / 96% | 86% / 63% |
+| 25 sessions | 79% | 64% | 99% / 97% | 88% / 66% |
+
+Embedding retrieval (Qwen3-Embedding-8B over all 1M tools, `results/zpred/run_emb_spec3_k50.json`) added ~1-2 points
+on ToolBench's 1M catalog at 9x the latency (300 ms vs 33 ms), so it stays off. Many ToolBench misses are calls the
+request never asks for (synthetic queries over randomly sampled APIs), a ceiling no retriever lifts.
 
 **ToolBench, held-out APIs** (`bench/zeval.py`, `results/zpred/eval_toolbench.json`, 18,549 calls, one of 3
 prefetched calls is an exact later call): 48.8% with the session's tools known, 31.6% from the full 1M catalog.

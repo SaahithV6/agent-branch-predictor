@@ -15,3 +15,4 @@ bench/results/old_models/
 bench/results/*fold*.txt
 bench/results/live*/*.txt
 bench/results/zpred_prev/
+bench/results/zpred_v3/

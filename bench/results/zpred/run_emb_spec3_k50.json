@@ -1,0 +1,476 @@
+{
+ "config": {
+  "cmd": "run",
+  "train": 60000,
+  "dev": 8000,
+  "test": null,
+  "k": 50,
+  "workers": 12,
+  "size": null,
+  "settings": "session,catalog",
+  "no_emb": false,
+  "spec": 3
+ },
+ "catalog_tools": 1019768,
+ "embeddings": true,
+ "session": {
+  "dev": {
+   "examples": 9961,
+   "retrieved": 0.9463,
+   "tool_top1": 0.7323,
+   "call_top1": 0.4971,
+   "ms_p50": 12.91,
+   "ms_p99": 103.76,
+   "spec": 3,
+   "first": {
+    "share": 0.34,
+    "retrieved": 0.975,
+    "tool": 0.833,
+    "call": 0.534
+   },
+   "same": {
+    "share": 0.478,
+    "retrieved": 0.967,
+    "tool": 0.73,
+    "call": 0.491
+   },
+   "new": {
+    "share": 0.159,
+    "retrieved": 0.962,
+    "tool": 0.633,
+    "call": 0.509
+   },
+   "@0.5": {
+    "threshold": 0.0025,
+    "coverage": 0.9768,
+    "precision": 0.5089
+   },
+   "@0.6": {
+    "threshold": 0.1869,
+    "coverage": 0.7277,
+    "precision": 0.6809
+   },
+   "@0.7": {
+    "threshold": 0.4501,
+    "coverage": 0.529,
+    "precision": 0.867
+   },
+   "@0.8": {
+    "threshold": 0.7898,
+    "coverage": 0.2869,
+    "precision": 0.9895
+   },
+   "@0.9": {
+    "threshold": 0.9447,
+    "coverage": 0.1083,
+    "precision": 1.0
+   }
+  },
+  "test_toolbench": {
+   "examples": 18549,
+   "retrieved": 0.9562,
+   "tool_top1": 0.7328,
+   "call_top1": 0.4871,
+   "ms_p50": 10.16,
+   "ms_p99": 57.95,
+   "spec": 3,
+   "first": {
+    "share": 0.33,
+    "retrieved": 0.979,
+    "tool": 0.83,
+    "call": 0.568
+   },
+   "same": {
+    "share": 0.454,
+    "retrieved": 0.979,
+    "tool": 0.745,
+    "call": 0.47
+   },
+   "new": {
+    "share": 0.197,
+    "retrieved": 0.956,
+    "tool": 0.611,
+    "call": 0.437
+   },
+   "@0.5": {
+    "threshold": 0.0025,
+    "coverage": 0.9813,
+    "precision": 0.4964
+   },
+   "@0.6": {
+    "threshold": 0.1869,
+    "coverage": 0.8128,
+    "precision": 0.5702
+   },
+   "@0.7": {
+    "threshold": 0.4501,
+    "coverage": 0.542,
+    "precision": 0.683
+   },
+   "@0.8": {
+    "threshold": 0.7898,
+    "coverage": 0.2245,
+    "precision": 0.8226
+   },
+   "@0.9": {
+    "threshold": 0.9447,
+    "coverage": 0.0574,
+    "precision": 0.9483
+   }
+  },
+  "test_toolace": {
+   "examples": 1780,
+   "retrieved": 1.0,
+   "tool_top1": 0.7938,
+   "call_top1": 0.2421,
+   "ms_p50": 8.06,
+   "ms_p99": 65.42,
+   "spec": 3,
+   "first": {
+    "share": 0.962,
+    "retrieved": 1.0,
+    "tool": 0.798,
+    "call": 0.246
+   },
+   "same": {
+    "share": 0.004,
+    "retrieved": 1.0,
+    "tool": 1.0,
+    "call": 0.125
+   },
+   "new": {
+    "share": 0.034,
+    "retrieved": 1.0,
+    "tool": 0.65,
+    "call": 0.15
+   },
+   "@0.5": {
+    "threshold": 0.0025,
+    "coverage": 1.0,
+    "precision": 0.2421
+   },
+   "@0.6": {
+    "threshold": 0.1869,
+    "coverage": 0.4994,
+    "precision": 0.3498
+   },
+   "@0.7": {
+    "threshold": 0.4501,
+    "coverage": 0.2118,
+    "precision": 0.4695
+   },
+   "@0.8": {
+    "threshold": 0.7898,
+    "coverage": 0.0483,
+    "precision": 0.6163
+   },
+   "@0.9": {
+    "threshold": 0.9447,
+    "coverage": 0.0101,
+    "precision": 0.6111
+   }
+  },
+  "test_taumt": {
+   "examples": 3267,
+   "retrieved": 1.0,
+   "tool_top1": 0.7655,
+   "call_top1": 0.4891,
+   "ms_p50": 33.53,
+   "ms_p99": 213.52,
+   "spec": 3,
+   "first": {
+    "share": 0.183,
+    "retrieved": 1.0,
+    "tool": 0.988,
+    "call": 0.409
+   },
+   "same": {
+    "share": 0.817,
+    "retrieved": 1.0,
+    "tool": 0.716,
+    "call": 0.507
+   },
+   "@0.5": {
+    "threshold": 0.0025,
+    "coverage": 1.0,
+    "precision": 0.4891
+   },
+   "@0.6": {
+    "threshold": 0.1869,
+    "coverage": 0.6645,
+    "precision": 0.6849
+   },
+   "@0.7": {
+    "threshold": 0.4501,
+    "coverage": 0.5054,
+    "precision": 0.765
+   },
+   "@0.8": {
+    "threshold": 0.7898,
+    "coverage": 0.288,
+    "precision": 0.8533
+   },
+   "@0.9": {
+    "threshold": 0.9447,
+    "coverage": 0.101,
+    "precision": 0.9606
+   }
+  },
+  "temp": 2.0,
+  "seconds": 140,
+  "ranker_gain": {
+   "bm25": 359796.0,
+   "rank": 247464.2,
+   "rel_top": 91950.3,
+   "gap_next": 102323.3,
+   "same_server_last": 3244.7,
+   "server_seen": 19047.4,
+   "called_before": 193183.5,
+   "is_last_tool": 66386.1,
+   "q_name_overlap": 182204.2,
+   "q_server_overlap": 21263.2,
+   "n_args": 98634.5,
+   "n_req": 78011.0,
+   "req_fillable": 7411.7,
+   "n_key_hits": 94780.4,
+   "n_prior": 66902.7,
+   "emb_cos": 0.0,
+   "emb_rank": 0.0,
+   "session": 0.0,
+   "server_named": 1870.4,
+   "srv_bm25": 70006.5,
+   "srv_rank": 13280.1,
+   "srv_rel_top": 19668.7
+  }
+ },
+ "catalog": {
+  "dev": {
+   "examples": 9961,
+   "retrieved": 0.7763,
+   "tool_top1": 0.4649,
+   "call_top1": 0.3123,
+   "ms_p50": 275.34,
+   "ms_p99": 620.92,
+   "spec": 3,
+   "first": {
+    "share": 0.348,
+    "retrieved": 0.674,
+    "tool": 0.338,
+    "call": 0.222
+   },
+   "same": {
+    "share": 0.494,
+    "retrieved": 0.935,
+    "tool": 0.667,
+    "call": 0.444
+   },
+   "new": {
+    "share": 0.159,
+    "retrieved": 0.506,
+    "tool": 0.116,
+    "call": 0.102
+   },
+   "@0.5": {
+    "threshold": 0.3883,
+    "coverage": 0.3234,
+    "precision": 0.8556
+   },
+   "@0.6": {
+    "threshold": 0.6793,
+    "coverage": 0.158,
+    "precision": 0.9803
+   },
+   "@0.7": {
+    "threshold": 0.9096,
+    "coverage": 0.0463,
+    "precision": 1.0
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "test_toolbench": {
+   "examples": 18549,
+   "retrieved": 0.8281,
+   "tool_top1": 0.5006,
+   "call_top1": 0.3252,
+   "ms_p50": 299.52,
+   "ms_p99": 634.54,
+   "spec": 3,
+   "first": {
+    "share": 0.337,
+    "retrieved": 0.771,
+    "tool": 0.419,
+    "call": 0.294
+   },
+   "same": {
+    "share": 0.466,
+    "retrieved": 0.995,
+    "tool": 0.727,
+    "call": 0.45
+   },
+   "new": {
+    "share": 0.197,
+    "retrieved": 0.533,
+    "tool": 0.104,
+    "call": 0.084
+   },
+   "@0.5": {
+    "threshold": 0.3883,
+    "coverage": 0.2944,
+    "precision": 0.5711
+   },
+   "@0.6": {
+    "threshold": 0.6793,
+    "coverage": 0.082,
+    "precision": 0.7475
+   },
+   "@0.7": {
+    "threshold": 0.9096,
+    "coverage": 0.005,
+    "precision": 0.9348
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "test_toolace": {
+   "examples": 1780,
+   "retrieved": 0.8506,
+   "tool_top1": 0.3292,
+   "call_top1": 0.109,
+   "ms_p50": 273.83,
+   "ms_p99": 650.76,
+   "spec": 3,
+   "first": {
+    "share": 0.962,
+    "retrieved": 0.855,
+    "tool": 0.336,
+    "call": 0.111
+   },
+   "same": {
+    "share": 0.004,
+    "retrieved": 1.0,
+    "tool": 0.875,
+    "call": 0.125
+   },
+   "new": {
+    "share": 0.034,
+    "retrieved": 0.717,
+    "tool": 0.05,
+    "call": 0.05
+   },
+   "@0.5": {
+    "threshold": 0.3883,
+    "coverage": 0.114,
+    "precision": 0.3153
+   },
+   "@0.6": {
+    "threshold": 0.6793,
+    "coverage": 0.0225,
+    "precision": 0.575
+   },
+   "@0.7": {
+    "threshold": 0.9096,
+    "coverage": 0.0011,
+    "precision": 0.5
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "test_taumt": {
+   "examples": 3267,
+   "retrieved": 0.723,
+   "tool_top1": 0.4821,
+   "call_top1": 0.3058,
+   "ms_p50": 67.42,
+   "ms_p99": 326.15,
+   "spec": 3,
+   "first": {
+    "share": 0.183,
+    "retrieved": 0.195,
+    "tool": 0.125,
+    "call": 0.057
+   },
+   "same": {
+    "share": 0.817,
+    "retrieved": 0.841,
+    "tool": 0.562,
+    "call": 0.362
+   },
+   "@0.5": {
+    "threshold": 0.3883,
+    "coverage": 0.3554,
+    "precision": 0.6684
+   },
+   "@0.6": {
+    "threshold": 0.6793,
+    "coverage": 0.1696,
+    "precision": 0.7906
+   },
+   "@0.7": {
+    "threshold": 0.9096,
+    "coverage": 0.0511,
+    "precision": 0.9042
+   },
+   "@0.8": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   },
+   "@0.9": {
+    "threshold": 1.01,
+    "coverage": 0.0,
+    "precision": 0.0
+   }
+  },
+  "temp": 2.0,
+  "seconds": 2542,
+  "ranker_gain": {
+   "bm25": 202697.5,
+   "rank": 656019.4,
+   "rel_top": 62969.3,
+   "gap_next": 88157.1,
+   "same_server_last": 16892.0,
+   "server_seen": 1968053.8,
+   "called_before": 94872.2,
+   "is_last_tool": 126370.0,
+   "q_name_overlap": 329572.7,
+   "q_server_overlap": 74391.0,
+   "n_args": 99308.0,
+   "n_req": 78361.5,
+   "req_fillable": 8663.9,
+   "n_key_hits": 76182.3,
+   "n_prior": 328816.9,
+   "emb_cos": 212360.5,
+   "emb_rank": 80961.8,
+   "session": 0.0,
+   "server_named": 9767.1,
+   "srv_bm25": 80692.4,
+   "srv_rank": 307559.0,
+   "srv_rel_top": 997554.0
+  }
+ }
+}

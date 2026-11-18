@@ -140,6 +140,9 @@ class Catalog:
         # tools.npy is aligned with the full catalog's order; a resized catalog runs BM25-only
         # float32 in RAM (1 GB at 1M x 256): numpy has no float16 BLAS, a float16 mat-vec is ~10x slower
         self.emb = np.load(EMB / "tools.npy").astype(np.float32) if emb and (EMB / "tools.npy").exists() and not size else None
+        if self.emb is not None and len(self.emb) < n:  # tools appended after tools.npy was made (later catalog files)
+            # ponytail: they get zero vectors (BM25 only); rerun bench/embed.py tools to embed them
+            self.emb = np.concatenate([self.emb, np.zeros((n - len(self.emb), self.emb.shape[1]), np.float32)])
         assert self.emb is None or len(self.emb) == n, "tools.npy is stale: rerun bench/embed.py tools"
         print(f"catalog: {n:,} tools, {len(vocab):,} words, {len(self.post_doc):,} postings, {time.time() - t0:.0f}s",
               flush=True)
@@ -670,7 +673,9 @@ def ctx_for(split, examples):
         return None
     m = json.load(open(EMB / f"ctx_{split}.json"))  # example key -> row
     arr = np.load(p, mmap_mode="r")
-    return [np.asarray(arr[m[f"{ex['src']}:{ex['conv']}:{len(ex['prior'])}"]]) for ex in examples]
+    keys = [f"{ex['src']}:{ex['conv']}:{len(ex['prior'])}" for ex in examples]
+    print(f"ctx {split}: {sum(k in m for k in keys)} of {len(keys)} examples embedded", flush=True)
+    return [np.asarray(arr[m[k]]) if k in m else None for k in keys]  # not embedded: BM25 only
 
 
 def run(a):
